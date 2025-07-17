@@ -299,7 +299,7 @@ class ApiService {
     formData.append('file', file);
 
     const response = await this.client.post<SyllabusUploadResponse>(
-      '/api/student-events/upload-syllabus',
+      '/api/courses/student-syllabus',
       formData,
       {
         headers: {
