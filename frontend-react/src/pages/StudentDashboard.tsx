@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   Container,
@@ -23,7 +23,6 @@ import type { Course } from '../types';
 
 const StudentDashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const queryClient = useQueryClient();
   const [searchCrn, setSearchCrn] = useState('');
   const [searchResults, setSearchResults] = useState<Course[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -42,7 +41,7 @@ const StudentDashboard: React.FC = () => {
 
   // These are placeholder mutations - the old API methods are deprecated
   const searchMutation = useMutation({
-    mutationFn: async (crn: string) => {
+    mutationFn: async (_crn: string) => {
       console.warn('Course search by CRN only is deprecated. Use the new MVP search with school/semester.');
       return [];
     },
@@ -58,7 +57,7 @@ const StudentDashboard: React.FC = () => {
 
   // Enrollment mutation placeholder
   const enrollMutation = useMutation({
-    mutationFn: async (courseId: string) => {
+    mutationFn: async (_courseId: string) => {
       console.warn('Direct course enrollment by ID is deprecated.');
       throw new Error('Feature unavailable');
     },

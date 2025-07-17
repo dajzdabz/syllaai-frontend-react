@@ -121,22 +121,21 @@ const CourseEventsPage: React.FC = () => {
     enabled: !!courseId,
     retry: 1,
     refetchOnWindowFocus: false,
-    onError: (error) => {
-      console.error('Failed to load course events:', error);
-    },
   });
 
   // Filter events by category
   const filteredEvents = useMemo(() => {
+    if (!Array.isArray(events)) return [];
     if (selectedCategory === 'All') {
       return events;
     }
-    return events.filter(event => event.category === selectedCategory);
+    return events.filter((event: any) => event.category === selectedCategory);
   }, [events, selectedCategory]);
 
   // Get unique categories from events
   const availableCategories = useMemo(() => {
-    const categories = [...new Set(events.map(event => event.category))];
+    if (!Array.isArray(events)) return [];
+    const categories = [...new Set(events.map((event: any) => event.category))];
     return categories.sort();
   }, [events]);
 
@@ -244,10 +243,10 @@ const CourseEventsPage: React.FC = () => {
                   onClick={() => setSelectedCategory('All')}
                   size="small"
                 >
-                  All ({events.length})
+                  All ({Array.isArray(events) ? events.length : 0})
                 </Button>
                 {availableCategories.map((category) => {
-                  const count = events.filter(e => e.category === category).length;
+                  const count = Array.isArray(events) ? events.filter((e: any) => e.category === category).length : 0;
                   const config = categoryConfig[category as EventCategory];
                   const IconComponent = config.icon;
                   
@@ -289,8 +288,8 @@ const CourseEventsPage: React.FC = () => {
               </Paper>
             ) : (
               <Grid container spacing={3}>
-                {filteredEvents.map((event) => {
-                  const config = categoryConfig[event.category];
+                {filteredEvents.map((event: any) => {
+                  const config = categoryConfig[event.category as EventCategory];
                   const IconComponent = config.icon;
                   const dateTime = formatDateTime(event.start_ts);
 
