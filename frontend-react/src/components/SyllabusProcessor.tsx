@@ -180,8 +180,13 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       setShowResults(true);
       onComplete?.(uploadResult);
 
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err) || 'Upload failed';
+    } catch (err: unknown) {
+      let errorMessage = 'Upload failed';
+      if (err instanceof Error) {
+        errorMessage = (err as Error).message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
       setError(errorMessage);
       setCurrentStage('error');
       onError?.(errorMessage);
@@ -198,7 +203,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       await courseService.exportToCalendar(result.extracted_events);
       // Show success message or close dialog
       onClose?.();
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to export to calendar');
     }
   }, [result, onClose]);
@@ -218,7 +223,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       });
       
       onClose?.();
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to save course');
     }
   }, [result, onClose]);
