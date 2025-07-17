@@ -222,7 +222,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
     if (!result?.extracted_events) return;
 
     try {
-      const courseTitle = result.course_metadata?.course_title || 'My Course';
+      const courseTitle = result.course_metadata?.course_title || `Syllabus Upload ${new Date().toLocaleDateString()}`;
       const semester = result.course_metadata?.semester || '2025SP';
       
       const savedCourse = await courseService.saveToMyCourses({
