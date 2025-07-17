@@ -75,14 +75,20 @@ const StudentDashboard: React.FC = () => {
   // Delete course mutation
   const deleteMutation = useMutation({
     mutationFn: async (courseId: string) => {
-      return await courseService.deleteCourse(courseId);
+      try {
+        return await courseService.deleteCourse(courseId);
+      } catch (error: any) {
+        console.error('Delete course API error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
+      console.log('Course deleted successfully');
       refetchCourses();
     },
     onError: (error: any) => {
       console.error('Failed to delete course:', error);
-      alert('Failed to delete course. Please try again.');
+      alert(`Failed to delete course: ${error.message || 'Please try again.'}`);
     },
   });
 
@@ -198,16 +204,18 @@ const StudentDashboard: React.FC = () => {
                               <Button
                                 size="small"
                                 color="error"
+                                disabled={deleteMutation.isPending}
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   if (window.confirm('Are you sure you want to delete this course?')) {
+                                    console.log('Deleting course:', course.id, course.title);
                                     handleDeleteCourse(course.id);
                                   }
                                 }}
                                 sx={{ minWidth: 'auto', p: 0.5 }}
                               >
-                                ×
+                                {deleteMutation.isPending ? '...' : '×'}
                               </Button>
                             )}
                           </Box>
