@@ -37,12 +37,16 @@ const StudentDashboard: React.FC = () => {
     queryKey: ['enrolledCourses'],
     queryFn: () => courseService.getCourses(),
     refetchOnWindowFocus: false,
-    onSuccess: (data) => {
+  });
+
+  // Debug logging effect (replacement for deprecated onSuccess)
+  React.useEffect(() => {
+    if (enrolledCourses && enrolledCourses.length >= 0) {
       console.log('=== ENROLLED COURSES DATA DEBUG ===');
-      console.log('Total courses:', data.length);
+      console.log('Total courses:', enrolledCourses.length);
       console.log('Current user:', user);
       console.log('User ID for comparison:', user?.id);
-      data.forEach((course, index) => {
+      enrolledCourses.forEach((course: Course, index: number) => {
         console.log(`Course ${index + 1}:`, {
           id: course.id,
           title: course.title,
@@ -51,7 +55,7 @@ const StudentDashboard: React.FC = () => {
         });
       });
     }
-  });
+  }, [enrolledCourses, user?.id]);
 
   // These are placeholder mutations - the old API methods are deprecated
   const searchMutation = useMutation({
@@ -236,13 +240,13 @@ const StudentDashboard: React.FC = () => {
                 <Alert severity="error" sx={{ mb: 2 }}>
                   Failed to load enrolled courses. Please refresh the page.
                 </Alert>
-              ) : enrolledCourses.length === 0 ? (
+              ) : (enrolledCourses as Course[]).length === 0 ? (
                 <Typography color="text.secondary">
                   No courses enrolled yet. Join a course using CRN.
                 </Typography>
               ) : (
                 <Grid container spacing={3}>
-                  {enrolledCourses.map((course) => (
+                  {(enrolledCourses as Course[]).map((course: Course) => (
                     <Grid item xs={12} sm={6} key={course.id}>
                       <Card
                         component={Link}
