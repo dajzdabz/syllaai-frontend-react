@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Container,
   Typography,
@@ -92,6 +92,7 @@ const categoryConfig: Record<EventCategory, {
 
 const CourseEventsPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | 'All'>('All');
 
   // Query for course details
@@ -133,6 +134,25 @@ const CourseEventsPage: React.FC = () => {
     retry: 1,
     refetchOnWindowFocus: false,
   });
+
+  // Delete course mutation
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!courseId) throw new Error('No course ID');
+      return await courseService.deleteCourse(courseId);
+    },
+    onSuccess: () => {
+      navigate('/dashboard');
+    },
+    onError: (error: any) => {
+      console.error('Failed to delete course:', error);
+      alert('Failed to delete course. Please try again.');
+    },
+  });
+
+  const handleDeleteCourse = () => {
+    deleteMutation.mutate();
+  };
 
   // Filter events by category
   const filteredEvents = useMemo(() => {
@@ -197,6 +217,19 @@ const CourseEventsPage: React.FC = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Course Events
           </Typography>
+          {course?.crn === 'PERSONAL' && (
+            <Button
+              color="error"
+              variant="outlined"
+              onClick={() => {
+                if (window.confirm('Are you sure you want to delete this course and all its events?')) {
+                  handleDeleteCourse();
+                }
+              }}
+            >
+              Delete Course
+            </Button>
+          )}
         </Toolbar>
       </AppBar>
 
