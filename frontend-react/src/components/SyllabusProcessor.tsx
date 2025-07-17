@@ -151,6 +151,20 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
     }
   }, []);
 
+  // Reset file input
+  const resetFileInput = useCallback(() => {
+    const fileInput = document.getElementById('file-input') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    setSelectedFile(null);
+    setError(null);
+    setResult(null);
+    setCurrentStage('idle');
+    setProgress(0);
+    setUploadProgress(0);
+  }, []);
+
   // Upload and process syllabus
   const handleUpload = useCallback(async () => {
     if (!selectedFile) return;
@@ -216,17 +230,27 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       const courseTitle = result.course_metadata?.course_title || 'My Course';
       const semester = result.course_metadata?.semester || '2025SP';
       
-      await courseService.saveToMyCourses({
+      const savedCourse = await courseService.saveToMyCourses({
         course_title: courseTitle,
         semester,
         events: result.extracted_events
       });
       
+      console.log('Course saved successfully:', savedCourse);
+      
+      // Reset the component and close dialog
+      resetFileInput();
+      setShowResults(false);
       onClose?.();
     } catch (err: unknown) {
-      setError('Failed to save course');
+      console.error('Failed to save course:', err);
+      let errorMessage = 'Failed to save course';
+      if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = String((err as any).message);
+      }
+      setError(errorMessage);
     }
-  }, [result, onClose]);
+  }, [result, onClose, resetFileInput]);
 
   // Render processing stage indicator
   const renderStageIndicator = (stage: ProcessingStageInfo, index: number) => {
@@ -327,7 +351,11 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
               }}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
-              onClick={() => document.getElementById('file-input')?.click()}
+              onClick={() => {
+                if (!selectedFile) {
+                  document.getElementById('file-input')?.click();
+                }
+              }}
             >
               <CloudUpload sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
               {selectedFile ? (
@@ -386,19 +414,6 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
                 {PROCESSING_STAGES.map((stage, index) => renderStageIndicator(stage, index))}
               </List>
 
-              {/* Upload Progress (separate from overall progress) */}
-              {currentStage === 'uploading' && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" gutterBottom>
-                    Upload Progress: {uploadProgress}%
-                  </Typography>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={uploadProgress} 
-                    color="secondary"
-                  />
-                </Box>
-              )}
             </Box>
           )}
 
@@ -415,13 +430,22 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
               <Alert severity="success" sx={{ mb: 2 }}>
                 Successfully processed syllabus! Found {result.extracted_events.length} events.
               </Alert>
-              <Button 
-                variant="contained" 
-                onClick={() => setShowResults(true)}
-                fullWidth
-              >
-                View Extracted Events
-              </Button>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button 
+                  variant="contained" 
+                  onClick={() => setShowResults(true)}
+                  fullWidth
+                >
+                  View Extracted Events
+                </Button>
+                <Button 
+                  variant="outlined" 
+                  onClick={resetFileInput}
+                  sx={{ minWidth: 120 }}
+                >
+                  Process Another
+                </Button>
+              </Box>
             </Box>
           )}
         </CardContent>
