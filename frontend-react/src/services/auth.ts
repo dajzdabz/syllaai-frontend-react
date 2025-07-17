@@ -119,7 +119,7 @@ class AuthService {
       
       const result = await apiService.authenticate({
         id_token: response.credential,
-        role: this.selectedRole,
+        role: this.selectedRole || undefined,
       });
 
       console.log('✅ ID token authentication successful');
@@ -138,7 +138,7 @@ class AuthService {
       const result = await apiService.authenticate({
         authorization_code: response.code,
         redirect_uri: this.config.redirectUri,
-        role: this.selectedRole,
+        role: this.selectedRole || undefined,
       });
 
       console.log('✅ Auth code authentication successful (with calendar access)');
