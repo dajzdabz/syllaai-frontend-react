@@ -233,10 +233,18 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       
       console.log('Course saved successfully:', savedCourse);
       
-      // Reset the component and close dialog
-      resetFileInput();
-      setShowResults(false);
-      onClose?.();
+      // Show success message
+      setError(null);
+      setResult(null);
+      setCurrentStage('complete');
+      
+      // Close dialog and reset after a brief delay to show success
+      setTimeout(() => {
+        resetFileInput();
+        setShowResults(false);
+        onClose?.();
+      }, 1000);
+      
     } catch (err: unknown) {
       console.error('Failed to save course:', err);
       let errorMessage = 'Failed to save course';

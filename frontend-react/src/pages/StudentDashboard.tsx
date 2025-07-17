@@ -17,7 +17,7 @@ import {
   Toolbar,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import { getEnrolledCourses, searchCourses, enrollInCourse } from '../services/courseService';
+import { courseService } from '../services/courseService';
 import SyllabusProcessor from '../components/SyllabusProcessor';
 import type { Course } from '../types';
 
@@ -33,37 +33,43 @@ const StudentDashboard: React.FC = () => {
     data: enrolledCourses = [],
     isLoading: isLoadingEnrolled,
     error: enrolledError,
+    refetch: refetchCourses,
   } = useQuery({
     queryKey: ['enrolledCourses'],
-    queryFn: getEnrolledCourses,
+    queryFn: () => courseService.getCourses(),
+    refetchOnWindowFocus: false,
   });
 
-  // Mutation for course search
+  // These are placeholder mutations - the old API methods are deprecated
   const searchMutation = useMutation({
-    mutationFn: searchCourses,
+    mutationFn: async (crn: string) => {
+      console.warn('Course search by CRN only is deprecated. Use the new MVP search with school/semester.');
+      return [];
+    },
     onSuccess: (results) => {
       setSearchResults(results);
-      setSearchError(results.length === 0 ? 'No courses found with that CRN' : null);
+      setSearchError('Course search requires school and semester. This feature will be updated soon.');
     },
     onError: () => {
-      setSearchError('Failed to search courses. Please try again.');
+      setSearchError('Course search is currently unavailable.');
       setSearchResults([]);
     },
   });
 
-  // Mutation for course enrollment
+  // Enrollment mutation placeholder
   const enrollMutation = useMutation({
-    mutationFn: enrollInCourse,
+    mutationFn: async (courseId: string) => {
+      console.warn('Direct course enrollment by ID is deprecated.');
+      throw new Error('Feature unavailable');
+    },
     onSuccess: () => {
-      // Refresh enrolled courses list
-      queryClient.invalidateQueries({ queryKey: ['enrolledCourses'] });
-      // Clear search results
+      refetchCourses();
       setSearchResults([]);
       setSearchCrn('');
       setSearchError(null);
     },
     onError: () => {
-      setSearchError('Failed to enroll in course. Please try again.');
+      setSearchError('Course enrollment is currently unavailable.');
     },
   });
 
@@ -114,7 +120,8 @@ const StudentDashboard: React.FC = () => {
             mode="student"
             onComplete={(result) => {
               console.log('Syllabus processed:', result);
-              // Show success message or handle the extracted events
+              // Refresh the courses list to show the newly saved course
+              refetchCourses();
             }}
             onError={(error) => {
               console.error('Syllabus processing error:', error);
@@ -156,11 +163,17 @@ const StudentDashboard: React.FC = () => {
                       >
                         <CardContent>
                           <Typography variant="h6">
-                            {course.name}
+                            {course.title || course.name || 'Untitled Course'}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            CRN: {course.crn} | Prof: {course.professor_name}
+                            {course.crn !== 'PERSONAL' ? `CRN: ${course.crn}` : 'Personal Course'}
+                            {course.semester && ` | ${courseService.getSemesterDisplayName(course.semester)}`}
                           </Typography>
+                          {course.school?.name && (
+                            <Typography variant="body2" color="text.secondary">
+                              {course.school.name}
+                            </Typography>
+                          )}
                         </CardContent>
                       </Card>
                     </Grid>
@@ -215,10 +228,11 @@ const StudentDashboard: React.FC = () => {
                     <Card key={course.id} sx={{ mb: 2 }}>
                       <CardContent>
                         <Typography variant="subtitle1">
-                          {course.name}
+                          {course.title || course.name || 'Untitled Course'}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                          CRN: {course.crn} | Prof: {course.professor_name}
+                          CRN: {course.crn}
+                          {course.semester && ` | ${courseService.getSemesterDisplayName(course.semester)}`}
                         </Typography>
                         <Button
                           fullWidth

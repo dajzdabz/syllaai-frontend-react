@@ -30,7 +30,7 @@ import {
   Work,
   Category,
 } from '@mui/icons-material';
-import { getCourseEvents, getCourseById } from '../services/courseService';
+import { courseService } from '../services/courseService';
 import type { EventCategory } from '../types';
 
 // Category configuration with colors and icons
@@ -101,8 +101,13 @@ const CourseEventsPage: React.FC = () => {
     error: courseError,
   } = useQuery({
     queryKey: ['course', courseId],
-    queryFn: () => getCourseById(courseId!),
+    queryFn: async () => {
+      const courses = await courseService.getCourses();
+      return courses.find(c => c.id === courseId) || null;
+    },
     enabled: !!courseId,
+    retry: 1,
+    refetchOnWindowFocus: false,
   });
 
   // Query for course events
@@ -112,8 +117,13 @@ const CourseEventsPage: React.FC = () => {
     error: eventsError,
   } = useQuery({
     queryKey: ['courseEvents', courseId],
-    queryFn: () => getCourseEvents(courseId!),
+    queryFn: () => courseService.getCourseEvents(courseId!),
     enabled: !!courseId,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    onError: (error) => {
+      console.error('Failed to load course events:', error);
+    },
   });
 
   // Filter events by category
