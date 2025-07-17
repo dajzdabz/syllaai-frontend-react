@@ -62,7 +62,7 @@ jobs:
         run: npm run build
         env:
           VITE_API_URL: https://syllaai-ai.onrender.com
-          VITE_GOOGLE_CLIENT_ID: GOOGLE_CLIENT_ID_REMOVED
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
       
       - name: Setup Pages
         uses: actions/configure-pages@v3
@@ -94,7 +94,7 @@ jobs:
 
 Already configured in `.env.production`:
 - `VITE_API_URL=https://syllaai-ai.onrender.com`
-- `VITE_GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID_REMOVED`
+- `VITE_GOOGLE_CLIENT_ID` - Set this as a GitHub Secret
 
 ## Next Steps After Deployment
 

@@ -43,8 +43,7 @@ class AuthService {
 
   constructor() {
     this.config = {
-      clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || 
-               'GOOGLE_CLIENT_ID_REMOVED',
+      clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
       redirectUri: import.meta.env.VITE_REDIRECT_URI || 
                    `${window.location.origin}/auth/callback`,
       scope: 'openid email profile https://www.googleapis.com/auth/calendar'

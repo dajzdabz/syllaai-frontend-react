@@ -12,9 +12,19 @@ dist
 dist-ssr
 *.local
 
-# Environment files
+# Environment files - NEVER COMMIT SECRETS
 .env
 .env.local
+.env.production
+.env.development
+.env.*.local
+
+# Security sensitive files
+CLAUDE.md
+.CLAUDE.md.swp
+*.pem
+*.key
+*.crt
 
 # Editor directories and files
 .vscode/*
