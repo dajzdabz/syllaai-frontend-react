@@ -1,0 +1,43 @@
+"""Add missing columns to schools table
+
+Revision ID: 004
+Revises: 003
+Create Date: 2025-01-11 13:00:00.000000
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = '004'
+down_revision = '003'
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    # Check if columns exist and add them if they don't
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    
+    # Get existing columns
+    existing_columns = [col['name'] for col in inspector.get_columns('schools')]
+    
+    # Add domain column if it doesn't exist
+    if 'domain' not in existing_columns:
+        op.add_column('schools', sa.Column('domain', sa.String(), nullable=True))
+    
+    # Add type column if it doesn't exist
+    if 'type' not in existing_columns:
+        op.add_column('schools', sa.Column('type', sa.String(), nullable=True))
+    
+    # Add created_at column if it doesn't exist
+    if 'created_at' not in existing_columns:
+        op.add_column('schools', sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True))
+
+
+def downgrade() -> None:
+    op.drop_column('schools', 'created_at')
+    op.drop_column('schools', 'type')
+    op.drop_column('schools', 'domain')

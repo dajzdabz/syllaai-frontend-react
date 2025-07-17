@@ -1,0 +1,73 @@
+"""Add default schools data
+
+Revision ID: 003
+Revises: 002
+Create Date: 2025-01-11 12:45:00.000000
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = '003'
+down_revision = '002'
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    # Check if schools already have data
+    conn = op.get_bind()
+    result = conn.execute(sa.text("SELECT COUNT(*) FROM schools")).fetchone()
+    
+    if result[0] == 0:  # Only insert if no schools exist
+        # Check what columns exist
+        inspector = sa.inspect(conn)
+        existing_columns = [col['name'] for col in inspector.get_columns('schools')]
+        
+        # Insert data based on available columns
+        if 'domain' in existing_columns and 'type' in existing_columns:
+            # Full insert with all columns
+            schools_table = sa.table('schools',
+                sa.column('id', sa.Integer),
+                sa.column('name', sa.String),
+                sa.column('domain', sa.String),
+                sa.column('type', sa.String)
+            )
+            
+            op.bulk_insert(schools_table, [
+                {'id': 1, 'name': 'Oakland University', 'domain': 'oakland.edu', 'type': 'university'},
+                {'id': 2, 'name': 'University of Michigan', 'domain': 'umich.edu', 'type': 'university'},
+                {'id': 3, 'name': 'Michigan State University', 'domain': 'msu.edu', 'type': 'university'},
+                {'id': 4, 'name': 'Wayne State University', 'domain': 'wayne.edu', 'type': 'university'},
+                {'id': 5, 'name': 'Eastern Michigan University', 'domain': 'emich.edu', 'type': 'university'},
+                {'id': 6, 'name': 'Western Michigan University', 'domain': 'wmich.edu', 'type': 'university'},
+                {'id': 7, 'name': 'Central Michigan University', 'domain': 'cmich.edu', 'type': 'university'},
+                {'id': 8, 'name': 'Northern Michigan University', 'domain': 'nmu.edu', 'type': 'university'},
+                {'id': 9, 'name': 'Grand Valley State University', 'domain': 'gvsu.edu', 'type': 'university'},
+                {'id': 10, 'name': 'Ferris State University', 'domain': 'ferris.edu', 'type': 'university'},
+            ])
+        else:
+            # Basic insert with just name and id
+            schools_table = sa.table('schools',
+                sa.column('id', sa.Integer),
+                sa.column('name', sa.String)
+            )
+            
+            op.bulk_insert(schools_table, [
+                {'id': 1, 'name': 'Oakland University'},
+                {'id': 2, 'name': 'University of Michigan'},
+                {'id': 3, 'name': 'Michigan State University'},
+                {'id': 4, 'name': 'Wayne State University'},
+                {'id': 5, 'name': 'Eastern Michigan University'},
+                {'id': 6, 'name': 'Western Michigan University'},
+                {'id': 7, 'name': 'Central Michigan University'},
+                {'id': 8, 'name': 'Northern Michigan University'},
+                {'id': 9, 'name': 'Grand Valley State University'},
+                {'id': 10, 'name': 'Ferris State University'},
+            ])
+
+
+def downgrade() -> None:
+    op.execute("DELETE FROM schools WHERE id <= 10")

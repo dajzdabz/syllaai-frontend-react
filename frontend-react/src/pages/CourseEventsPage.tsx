@@ -1,0 +1,349 @@
+import React, { useState, useMemo } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import {
+  Container,
+  Typography,
+  Box,
+  Card,
+  CardContent,
+  CircularProgress,
+  Alert,
+  Chip,
+  Grid,
+  Button,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Paper,
+  Breadcrumbs,
+} from '@mui/material';
+import {
+  ArrowBack,
+  Event,
+  LocationOn,
+  Schedule,
+  Assignment,
+  Quiz,
+  School,
+  Slideshow,
+  Work,
+  Category,
+} from '@mui/icons-material';
+import { getCourseEvents, getCourseById } from '../services/courseService';
+import type { EventCategory } from '../types';
+
+// Category configuration with colors and icons
+const categoryConfig = {
+  Exam: { 
+    chipColor: 'error' as const,
+    buttonColor: 'error' as const,
+    icon: Assignment, 
+    bgColor: '#ffebee' 
+  },
+  Quiz: { 
+    chipColor: 'warning' as const,
+    buttonColor: 'warning' as const,
+    icon: Quiz, 
+    bgColor: '#fff3e0' 
+  },
+  Assignment: { 
+    chipColor: 'primary' as const,
+    buttonColor: 'primary' as const,
+    icon: Work, 
+    bgColor: '#e3f2fd' 
+  },
+  Project: { 
+    chipColor: 'secondary' as const,
+    buttonColor: 'secondary' as const,
+    icon: Work, 
+    bgColor: '#e0f2f1' 
+  },
+  HW: { 
+    chipColor: 'primary' as const,
+    buttonColor: 'primary' as const,
+    icon: Work, 
+    bgColor: '#e3f2fd' 
+  },
+  Presentation: { 
+    chipColor: 'success' as const,
+    buttonColor: 'success' as const,
+    icon: Slideshow, 
+    bgColor: '#e8f5e8' 
+  },
+  Class: { 
+    chipColor: 'default' as const,
+    buttonColor: 'inherit' as const,
+    icon: School, 
+    bgColor: '#f5f5f5' 
+  },
+  Other: { 
+    chipColor: 'default' as const,
+    buttonColor: 'inherit' as const,
+    icon: Category, 
+    bgColor: '#f5f5f5' 
+  }
+};
+
+const CourseEventsPage: React.FC = () => {
+  const { courseId } = useParams<{ courseId: string }>();
+  const courseIdNum = courseId ? parseInt(courseId, 10) : 0;
+  const [selectedCategory, setSelectedCategory] = useState<EventCategory | 'All'>('All');
+
+  // Query for course details
+  const {
+    data: course,
+    isLoading: isLoadingCourse,
+    error: courseError,
+  } = useQuery({
+    queryKey: ['course', courseIdNum],
+    queryFn: () => getCourseById(courseIdNum),
+    enabled: !!courseIdNum,
+  });
+
+  // Query for course events
+  const {
+    data: events = [],
+    isLoading: isLoadingEvents,
+    error: eventsError,
+  } = useQuery({
+    queryKey: ['courseEvents', courseIdNum],
+    queryFn: () => getCourseEvents(courseIdNum),
+    enabled: !!courseIdNum,
+  });
+
+  // Filter events by category
+  const filteredEvents = useMemo(() => {
+    if (selectedCategory === 'All') {
+      return events;
+    }
+    return events.filter(event => event.category === selectedCategory);
+  }, [events, selectedCategory]);
+
+  // Get unique categories from events
+  const availableCategories = useMemo(() => {
+    const categories = [...new Set(events.map(event => event.category))];
+    return categories.sort();
+  }, [events]);
+
+  // Format date and time for display
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return {
+      date: date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      }),
+      time: date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true
+      })
+    };
+  };
+
+  const isLoading = isLoadingCourse || isLoadingEvents;
+  const hasError = courseError || eventsError;
+
+  if (!courseIdNum) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">
+          Invalid course ID. Please check the URL and try again.
+        </Alert>
+      </Container>
+    );
+  }
+
+  return (
+    <Box sx={{ flexGrow: 1 }}>
+      {/* Navigation Bar */}
+      <AppBar position="static" elevation={0} sx={{ mb: 4 }}>
+        <Toolbar>
+          <IconButton
+            component={Link}
+            to="/dashboard"
+            edge="start"
+            color="inherit"
+            sx={{ mr: 2 }}
+          >
+            <ArrowBack />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Course Events
+          </Typography>
+        </Toolbar>
+      </AppBar>
+
+      <Container maxWidth="lg">
+        {/* Breadcrumbs */}
+        <Breadcrumbs sx={{ mb: 3 }}>
+          <Link to="/dashboard" style={{ textDecoration: 'none' }}>
+            <Typography color="primary">Dashboard</Typography>
+          </Link>
+          <Typography color="text.primary">
+            {course?.name || 'Course Events'}
+          </Typography>
+        </Breadcrumbs>
+
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress size={60} />
+          </Box>
+        ) : hasError ? (
+          <Alert severity="error" sx={{ mb: 4 }}>
+            Failed to load course events. Please try refreshing the page.
+          </Alert>
+        ) : !course ? (
+          <Alert severity="warning" sx={{ mb: 4 }}>
+            Course not found. You may not be enrolled in this course.
+          </Alert>
+        ) : (
+          <>
+            {/* Course Header */}
+            <Paper sx={{ p: 4, mb: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <School sx={{ fontSize: 40, color: 'primary.main' }} />
+                <Box>
+                  <Typography variant="h3" component="h1" gutterBottom>
+                    {course.name}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Chip label={course.crn} color="primary" />
+                    <Typography variant="h6" color="text.secondary">
+                      {course.professor_name}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            </Paper>
+
+            {/* Category Filters */}
+            <Paper sx={{ p: 3, mb: 4 }}>
+              <Typography variant="h5" gutterBottom>
+                Filter by Category
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Button
+                  variant={selectedCategory === 'All' ? 'contained' : 'outlined'}
+                  onClick={() => setSelectedCategory('All')}
+                  size="small"
+                >
+                  All ({events.length})
+                </Button>
+                {availableCategories.map((category) => {
+                  const count = events.filter(e => e.category === category).length;
+                  const config = categoryConfig[category];
+                  const IconComponent = config.icon;
+                  
+                  return (
+                    <Button
+                      key={category}
+                      variant={selectedCategory === category ? 'contained' : 'outlined'}
+                      color={config.buttonColor}
+                      onClick={() => setSelectedCategory(category)}
+                      startIcon={<IconComponent />}
+                      size="small"
+                    >
+                      {category} ({count})
+                    </Button>
+                  );
+                })}
+              </Box>
+            </Paper>
+
+            {/* Events Display */}
+            <Typography variant="h4" gutterBottom>
+              {selectedCategory === 'All' ? 'All Events' : `${selectedCategory} Events`}
+              <Typography component="span" variant="h6" color="text.secondary" sx={{ ml: 2 }}>
+                ({filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'events'})
+              </Typography>
+            </Typography>
+
+            {filteredEvents.length === 0 ? (
+              <Paper sx={{ p: 6, textAlign: 'center' }}>
+                <Event sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  No {selectedCategory === 'All' ? '' : selectedCategory.toLowerCase()} events found
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {selectedCategory === 'All' 
+                    ? 'This course has no events yet.' 
+                    : 'Try selecting a different category to see more events.'}
+                </Typography>
+              </Paper>
+            ) : (
+              <Grid container spacing={3}>
+                {filteredEvents.map((event) => {
+                  const config = categoryConfig[event.category];
+                  const IconComponent = config.icon;
+                  const dateTime = formatDateTime(event.start_ts);
+
+                  return (
+                    <Grid item xs={12} md={6} lg={4} key={event.id}>
+                      <Card
+                        sx={{
+                          height: '100%',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-4px)',
+                            boxShadow: 3,
+                          },
+                        }}
+                      >
+                        <CardContent>
+                          {/* Category Badge */}
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                            <Chip
+                              icon={<IconComponent />}
+                              label={event.category}
+                              color={config.chipColor}
+                              size="small"
+                            />
+                          </Box>
+
+                          {/* Event Title */}
+                          <Typography variant="h6" component="h3" gutterBottom>
+                            {event.title}
+                          </Typography>
+
+                          {/* Date and Time */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
+                            <Typography variant="body2" color="text.secondary">
+                              {dateTime.date} at {dateTime.time}
+                            </Typography>
+                          </Box>
+
+                          {/* Location */}
+                          {event.location && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                              <LocationOn sx={{ fontSize: 16, color: 'text.secondary' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                {event.location}
+                              </Typography>
+                            </Box>
+                          )}
+
+                          {/* Description */}
+                          {event.description && (
+                            <Typography variant="body2" color="text.secondary">
+                              {event.description}
+                            </Typography>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            )}
+          </>
+        )}
+      </Container>
+    </Box>
+  );
+};
+
+export default CourseEventsPage;
