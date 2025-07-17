@@ -187,14 +187,8 @@ class AuthService {
   private async signInSimple(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        window.google.accounts.id.prompt((notification: any) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            // Fallback to popup if One Tap fails
-            this.showGoogleSignInPopup().then(resolve).catch(reject);
-          } else {
-            resolve();
-          }
-        });
+        // Use direct popup instead of One Tap to avoid FedCM warnings
+        this.showGoogleSignInPopup().then(resolve).catch(reject);
       } catch (error) {
         console.error('❌ Simple sign-in failed:', error);
         reject(error);

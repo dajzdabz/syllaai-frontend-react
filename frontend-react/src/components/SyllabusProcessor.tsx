@@ -182,8 +182,8 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
 
     } catch (err: unknown) {
       let errorMessage = 'Upload failed';
-      if (err instanceof Error) {
-        errorMessage = (err as Error).message;
+      if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = String((err as any).message);
       } else if (typeof err === 'string') {
         errorMessage = err;
       }
