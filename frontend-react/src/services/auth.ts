@@ -72,31 +72,38 @@ class AuthService {
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
       script.onload = () => {
-        try {
-          // Initialize GSI for ID token flow (simple sign-in)
-          window.google.accounts.id.initialize({
-            client_id: this.config.clientId,
-            callback: this.handleCredentialResponse.bind(this),
-            auto_select: false,
-            cancel_on_tap_outside: false
-          });
+        // Add a small delay to ensure Google's script is fully loaded
+        setTimeout(() => {
+          try {
+            if (!window.google || !window.google.accounts) {
+              throw new Error('Google accounts API not available');
+            }
 
-          // Initialize OAuth2 for authorization code flow (calendar access)
-          this.googleOAuth2 = window.google.accounts.oauth2.initCodeClient({
-            client_id: this.config.clientId,
-            scope: this.config.scope,
-            ux_mode: 'popup',
-            callback: this.handleAuthCodeResponse.bind(this)
-          });
+            // Initialize GSI for ID token flow (simple sign-in)
+            window.google.accounts.id.initialize({
+              client_id: this.config.clientId,
+              callback: this.handleCredentialResponse.bind(this),
+              auto_select: false,
+              cancel_on_tap_outside: false
+            });
 
-          this.googleAuth = true;
-          this.isInitialized = true;
-          console.log('✅ Google Auth initialized successfully');
-          resolve();
-        } catch (error) {
-          console.error('❌ Failed to initialize Google Auth:', error);
-          reject(error);
-        }
+            // Initialize OAuth2 for authorization code flow (calendar access)
+            this.googleOAuth2 = window.google.accounts.oauth2.initCodeClient({
+              client_id: this.config.clientId,
+              scope: this.config.scope,
+              ux_mode: 'popup',
+              callback: this.handleAuthCodeResponse.bind(this)
+            });
+
+            this.googleAuth = true;
+            this.isInitialized = true;
+            console.log('✅ Google Auth initialized successfully');
+            resolve();
+          } catch (error) {
+            console.error('❌ Failed to initialize Google Auth:', error);
+            reject(error);
+          }
+        }, 100);
       };
       script.onerror = () => {
         console.error('❌ Failed to load Google GSI script');
@@ -107,8 +114,38 @@ class AuthService {
       if (!document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
         document.head.appendChild(script);
       } else {
-        // Script already loaded, just initialize
-        script.onload?.(new Event('load'));
+        // Script already loaded, just initialize with delay
+        setTimeout(() => {
+          try {
+            if (!window.google || !window.google.accounts) {
+              throw new Error('Google accounts API not available');
+            }
+
+            // Initialize GSI for ID token flow (simple sign-in)
+            window.google.accounts.id.initialize({
+              client_id: this.config.clientId,
+              callback: this.handleCredentialResponse.bind(this),
+              auto_select: false,
+              cancel_on_tap_outside: false
+            });
+
+            // Initialize OAuth2 for authorization code flow (calendar access)
+            this.googleOAuth2 = window.google.accounts.oauth2.initCodeClient({
+              client_id: this.config.clientId,
+              scope: this.config.scope,
+              ux_mode: 'popup',
+              callback: this.handleAuthCodeResponse.bind(this)
+            });
+
+            this.googleAuth = true;
+            this.isInitialized = true;
+            console.log('✅ Google Auth initialized successfully');
+            resolve();
+          } catch (error) {
+            console.error('❌ Failed to initialize Google Auth:', error);
+            reject(error);
+          }
+        }, 100);
       }
     });
   }
