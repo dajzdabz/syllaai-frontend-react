@@ -34,7 +34,12 @@ import { getCourseEvents, getCourseById } from '../services/courseService';
 import type { EventCategory } from '../types';
 
 // Category configuration with colors and icons
-const categoryConfig = {
+const categoryConfig: Record<EventCategory, {
+  chipColor: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+  buttonColor: 'inherit' | 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning';
+  icon: React.ElementType;
+  bgColor: string;
+}> = {
   Exam: { 
     chipColor: 'error' as const,
     buttonColor: 'error' as const,
@@ -87,7 +92,6 @@ const categoryConfig = {
 
 const CourseEventsPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
-  const courseIdNum = courseId ? parseInt(courseId, 10) : 0;
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | 'All'>('All');
 
   // Query for course details
@@ -96,9 +100,9 @@ const CourseEventsPage: React.FC = () => {
     isLoading: isLoadingCourse,
     error: courseError,
   } = useQuery({
-    queryKey: ['course', courseIdNum],
-    queryFn: () => getCourseById(courseIdNum),
-    enabled: !!courseIdNum,
+    queryKey: ['course', courseId],
+    queryFn: () => getCourseById(courseId!),
+    enabled: !!courseId,
   });
 
   // Query for course events
@@ -107,9 +111,9 @@ const CourseEventsPage: React.FC = () => {
     isLoading: isLoadingEvents,
     error: eventsError,
   } = useQuery({
-    queryKey: ['courseEvents', courseIdNum],
-    queryFn: () => getCourseEvents(courseIdNum),
-    enabled: !!courseIdNum,
+    queryKey: ['courseEvents', courseId],
+    queryFn: () => getCourseEvents(courseId!),
+    enabled: !!courseId,
   });
 
   // Filter events by category
@@ -146,7 +150,7 @@ const CourseEventsPage: React.FC = () => {
   const isLoading = isLoadingCourse || isLoadingEvents;
   const hasError = courseError || eventsError;
 
-  if (!courseIdNum) {
+  if (!courseId) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Alert severity="error">
@@ -234,7 +238,7 @@ const CourseEventsPage: React.FC = () => {
                 </Button>
                 {availableCategories.map((category) => {
                   const count = events.filter(e => e.category === category).length;
-                  const config = categoryConfig[category];
+                  const config = categoryConfig[category as EventCategory];
                   const IconComponent = config.icon;
                   
                   return (
@@ -242,7 +246,7 @@ const CourseEventsPage: React.FC = () => {
                       key={category}
                       variant={selectedCategory === category ? 'contained' : 'outlined'}
                       color={config.buttonColor}
-                      onClick={() => setSelectedCategory(category)}
+                      onClick={() => setSelectedCategory(category as EventCategory)}
                       startIcon={<IconComponent />}
                       size="small"
                     >

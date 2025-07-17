@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { getEnrolledCourses, searchCourses, enrollInCourse } from '../services/courseService';
+import SyllabusProcessor from '../components/SyllabusProcessor';
 import type { Course } from '../types';
 
 const StudentDashboard: React.FC = () => {
@@ -73,7 +74,7 @@ const StudentDashboard: React.FC = () => {
     }
   };
 
-  const handleEnroll = (courseId: number) => {
+  const handleEnroll = (courseId: string) => {
     enrollMutation.mutate(courseId);
   };
 
@@ -104,42 +105,21 @@ const StudentDashboard: React.FC = () => {
         {/* Upload Syllabus Section - TOP PRIORITY */}
         <Paper sx={{ p: 3, mb: 4 }}>
           <Typography variant="h5" gutterBottom>
-            Upload Syllabus
+            Upload Your Syllabus
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Drop your syllabus here for AI processing
+            Upload any syllabus (even from other courses) to extract events and sync them to your calendar
           </Typography>
-          <Box
-            sx={{
-              border: '2px dashed #ccc',
-              borderRadius: 2,
-              p: 4,
-              textAlign: 'center',
-              bgcolor: '#f5f5f5',
-              cursor: 'pointer',
-              '&:hover': { borderColor: 'primary.main', bgcolor: '#f0f0f0' }
+          <SyllabusProcessor
+            mode="student"
+            onComplete={(result) => {
+              console.log('Syllabus processed:', result);
+              // Show success message or handle the extracted events
             }}
-            onClick={() => document.getElementById('syllabusFileInput')?.click()}
-          >
-            <Typography variant="h6" gutterBottom>
-              Drop syllabus here or click to browse
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Supports PDF and DOCX files
-            </Typography>
-            <input
-              id="syllabusFileInput"
-              type="file"
-              accept=".pdf,.docx"
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                if (e.target.files?.[0]) {
-                  console.log('File selected:', e.target.files[0].name);
-                  // TODO: Process syllabus
-                }
-              }}
-            />
-          </Box>
+            onError={(error) => {
+              console.error('Syllabus processing error:', error);
+            }}
+          />
         </Paper>
 
         <Grid container spacing={4}>

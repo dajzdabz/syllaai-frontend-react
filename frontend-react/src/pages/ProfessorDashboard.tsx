@@ -16,16 +16,20 @@ import {
   Alert,
 } from '@mui/material';
 import { getCourses, createCourse } from '../services/courseService';
+import SyllabusProcessor from '../components/SyllabusProcessor';
 import type { Course } from '../types';
 
 const ProfessorDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
   const [courseForm, setCourseForm] = useState({
-    name: '',
+    title: '',
     crn: '',
-    description: '',
+    school_id: 1,
+    semester: '2025SP',
+    timezone: 'America/New_York'
   });
+  const [selectedCourseForSyllabus, setSelectedCourseForSyllabus] = useState<Course | null>(null);
 
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ['professorCourses'],
@@ -36,13 +40,13 @@ const ProfessorDashboard: React.FC = () => {
     mutationFn: createCourse,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['professorCourses'] });
-      setCourseForm({ name: '', crn: '', description: '' });
+      setCourseForm({ title: '', crn: '', school_id: 1, semester: '2025SP', timezone: 'America/New_York' });
     },
   });
 
   const handleCreateCourse = (e: React.FormEvent) => {
     e.preventDefault();
-    if (courseForm.name && courseForm.crn) {
+    if (courseForm.title && courseForm.crn) {
       createCourseMutation.mutate(courseForm);
     }
   };
@@ -68,42 +72,34 @@ const ProfessorDashboard: React.FC = () => {
         {/* Upload Syllabus Section - TOP PRIORITY */}
         <Paper sx={{ p: 3, mb: 4 }}>
           <Typography variant="h5" gutterBottom>
-            Upload Syllabus
+            Upload Syllabus for Course
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Drop your syllabus here to create a new course
+            {selectedCourseForSyllabus 
+              ? `Upload syllabus for ${selectedCourseForSyllabus.title} (${selectedCourseForSyllabus.crn})`
+              : 'Select a course first, then upload its syllabus to extract events'
+            }
           </Typography>
-          <Box
-            sx={{
-              border: '2px dashed #ccc',
-              borderRadius: 2,
-              p: 4,
-              textAlign: 'center',
-              bgcolor: '#f5f5f5',
-              cursor: 'pointer',
-              '&:hover': { borderColor: 'primary.main', bgcolor: '#f0f0f0' }
-            }}
-            onClick={() => document.getElementById('professorSyllabusInput')?.click()}
-          >
-            <Typography variant="h6" gutterBottom>
-              Drop syllabus here or click to browse
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Supports PDF and DOCX files
-            </Typography>
-            <input
-              id="professorSyllabusInput"
-              type="file"
-              accept=".pdf,.docx"
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                if (e.target.files?.[0]) {
-                  console.log('File selected:', e.target.files[0].name);
-                  // TODO: Process syllabus and create course
-                }
+          {selectedCourseForSyllabus ? (
+            <SyllabusProcessor
+              mode="professor"
+              courseId={selectedCourseForSyllabus.id}
+              onComplete={(result) => {
+                console.log('Syllabus processed:', result);
+                // Refresh courses to show updated event count
+                queryClient.invalidateQueries({ queryKey: ['professorCourses'] });
+                setSelectedCourseForSyllabus(null);
               }}
+              onError={(error) => {
+                console.error('Syllabus processing error:', error);
+              }}
+              onClose={() => setSelectedCourseForSyllabus(null)}
             />
-          </Box>
+          ) : (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              Create a course first, then click "Upload Syllabus" button next to it to process the syllabus
+            </Alert>
+          )}
         </Paper>
 
         <Grid container spacing={4}>
@@ -116,9 +112,9 @@ const ProfessorDashboard: React.FC = () => {
               <form onSubmit={handleCreateCourse}>
                 <TextField
                   fullWidth
-                  label="Course Name"
-                  value={courseForm.name}
-                  onChange={(e) => setCourseForm({ ...courseForm, name: e.target.value })}
+                  label="Course Title"
+                  value={courseForm.title}
+                  onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
                   sx={{ mb: 2 }}
                   required
                 />
@@ -132,12 +128,11 @@ const ProfessorDashboard: React.FC = () => {
                 />
                 <TextField
                   fullWidth
-                  label="Description"
-                  value={courseForm.description}
-                  onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
+                  label="Semester"
+                  value={courseForm.semester}
+                  onChange={(e) => setCourseForm({ ...courseForm, semester: e.target.value })}
                   sx={{ mb: 2 }}
-                  multiline
-                  rows={3}
+                  placeholder="2025SP"
                 />
                 <Button
                   type="submit"
@@ -175,16 +170,35 @@ const ProfessorDashboard: React.FC = () => {
                       <Card>
                         <CardContent>
                           <Typography variant="h6">
-                            {course.name}
+                            {course.title || course.name}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
                             CRN: {course.crn}
                           </Typography>
-                          {course.description && (
+                          {course.semester && (
                             <Typography variant="body2" sx={{ mt: 1 }}>
-                              {course.description}
+                              Semester: {course.semester}
                             </Typography>
                           )}
+                          <Typography variant="body2" sx={{ mt: 1 }}>
+                            Events: {course.event_count || 0}
+                          </Typography>
+                          <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              onClick={() => setSelectedCourseForSyllabus(course)}
+                            >
+                              Upload Syllabus
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              href={`/course/${course.id}`}
+                            >
+                              View Events
+                            </Button>
+                          </Box>
                         </CardContent>
                       </Card>
                     </Grid>
