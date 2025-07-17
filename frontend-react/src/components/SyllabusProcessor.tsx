@@ -108,7 +108,6 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStage, setCurrentStage] = useState<ProcessingStage>('idle');
   const [progress, setProgress] = useState(0);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SyllabusUploadResponse | null>(null);
   const [showResults, setShowResults] = useState(false);
@@ -146,9 +145,6 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
   const handleProgress = useCallback((progress: FileUploadProgress) => {
     setCurrentStage(progress.stage);
     setProgress(progress.progress);
-    if (progress.uploadProgress !== undefined) {
-      setUploadProgress(progress.uploadProgress);
-    }
   }, []);
 
   // Reset file input
@@ -162,7 +158,6 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
     setResult(null);
     setCurrentStage('idle');
     setProgress(0);
-    setUploadProgress(0);
   }, []);
 
   // Upload and process syllabus
