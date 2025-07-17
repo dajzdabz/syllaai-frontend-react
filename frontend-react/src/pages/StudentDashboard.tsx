@@ -72,6 +72,20 @@ const StudentDashboard: React.FC = () => {
     },
   });
 
+  // Delete course mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (courseId: string) => {
+      return await courseService.deleteCourse(courseId);
+    },
+    onSuccess: () => {
+      refetchCourses();
+    },
+    onError: (error: any) => {
+      console.error('Failed to delete course:', error);
+      alert('Failed to delete course. Please try again.');
+    },
+  });
+
   const handleSearch = () => {
     if (searchCrn.trim()) {
       setSearchError(null);
@@ -81,6 +95,10 @@ const StudentDashboard: React.FC = () => {
 
   const handleEnroll = (courseId: string) => {
     enrollMutation.mutate(courseId);
+  };
+
+  const handleDeleteCourse = (courseId: string) => {
+    deleteMutation.mutate(courseId);
   };
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
@@ -161,18 +179,38 @@ const StudentDashboard: React.FC = () => {
                         }}
                       >
                         <CardContent>
-                          <Typography variant="h6">
-                            {course.title || course.name || 'Untitled Course'}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {course.crn !== 'PERSONAL' ? `CRN: ${course.crn}` : 'Personal Course'}
-                            {course.semester && ` | ${courseService.getSemesterDisplayName(course.semester)}`}
-                          </Typography>
-                          {course.school?.name && (
-                            <Typography variant="body2" color="text.secondary">
-                              {course.school.name}
-                            </Typography>
-                          )}
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <Box sx={{ flexGrow: 1 }}>
+                              <Typography variant="h6">
+                                {course.title || course.name || 'Untitled Course'}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {course.crn !== 'PERSONAL' ? `CRN: ${course.crn}` : 'Personal Course'}
+                                {course.semester && ` | ${courseService.getSemesterDisplayName(course.semester)}`}
+                              </Typography>
+                              {course.school?.name && (
+                                <Typography variant="body2" color="text.secondary">
+                                  {course.school.name}
+                                </Typography>
+                              )}
+                            </Box>
+                            {course.crn === 'PERSONAL' && (
+                              <Button
+                                size="small"
+                                color="error"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (window.confirm('Are you sure you want to delete this course?')) {
+                                    handleDeleteCourse(course.id);
+                                  }
+                                }}
+                                sx={{ minWidth: 'auto', p: 0.5 }}
+                              >
+                                ×
+                              </Button>
+                            )}
+                          </Box>
                         </CardContent>
                       </Card>
                     </Grid>
