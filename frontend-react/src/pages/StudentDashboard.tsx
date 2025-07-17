@@ -37,6 +37,20 @@ const StudentDashboard: React.FC = () => {
     queryKey: ['enrolledCourses'],
     queryFn: () => courseService.getCourses(),
     refetchOnWindowFocus: false,
+    onSuccess: (data) => {
+      console.log('=== ENROLLED COURSES DATA DEBUG ===');
+      console.log('Total courses:', data.length);
+      console.log('Current user:', user);
+      console.log('User ID for comparison:', user?.id);
+      data.forEach((course, index) => {
+        console.log(`Course ${index + 1}:`, {
+          id: course.id,
+          title: course.title,
+          created_by: course.created_by,
+          isPersonal: course.created_by === user?.id
+        });
+      });
+    }
   });
 
   // These are placeholder mutations - the old API methods are deprecated
@@ -95,10 +109,20 @@ const StudentDashboard: React.FC = () => {
   // Unenroll from course mutation (for enrolled courses)
   const unenrollMutation = useMutation({
     mutationFn: async (courseId: string) => {
+      console.log('=== UNENROLL DEBUG ===');
+      console.log('Course ID:', courseId);
+      console.log('Course ID Type:', typeof courseId);
+      console.log('API URL will be:', `/api/courses/${courseId}/unenroll`);
+      
       try {
-        return await courseService.unenrollFromCourse(courseId);
+        const result = await courseService.unenrollFromCourse(courseId);
+        console.log('Unenroll API response:', result);
+        return result;
       } catch (error: any) {
         console.error('Unenroll course API error:', error);
+        console.error('Error response:', error.response);
+        console.error('Error status:', error.response?.status);
+        console.error('Error data:', error.response?.data);
         throw error;
       }
     },
@@ -108,7 +132,13 @@ const StudentDashboard: React.FC = () => {
     },
     onError: (error: any) => {
       console.error('Failed to unenroll from course:', error);
-      alert(`Failed to remove course: ${error.message || 'Please try again.'}`);
+      console.error('Mutation error details:', {
+        message: error.message,
+        response: error.response,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      alert(`Failed to remove course: ${error.response?.data?.detail || error.message || 'Please try again.'}`);
     },
   });
 
@@ -124,14 +154,23 @@ const StudentDashboard: React.FC = () => {
   };
 
   const handleRemoveCourse = (course: Course) => {
+    console.log('=== HANDLE REMOVE COURSE DEBUG ===');
+    console.log('Course object:', course);
+    console.log('Course ID:', course.id);
+    console.log('Course created_by:', course.created_by);
+    console.log('Current user ID:', user?.id);
+    
     // Check if this is a personal course (student created it)
     const isPersonalCourse = course.created_by === user?.id;
+    console.log('Is personal course?', isPersonalCourse);
     
     if (isPersonalCourse) {
       // Delete the course entirely
+      console.log('Calling deleteMutation with course ID:', course.id);
       deleteMutation.mutate(course.id);
     } else {
       // Unenroll from the course
+      console.log('Calling unenrollMutation with course ID:', course.id);
       unenrollMutation.mutate(course.id);
     }
   };
@@ -237,6 +276,11 @@ const StudentDashboard: React.FC = () => {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 const isPersonalCourse = course.created_by === user?.id;
+                                console.log('=== BUTTON CLICK DEBUG ===');
+                                console.log('Course created_by:', course.created_by, typeof course.created_by);
+                                console.log('User ID:', user?.id, typeof user?.id);
+                                console.log('Is personal course?', isPersonalCourse);
+                                
                                 const actionText = isPersonalCourse ? 'delete this course' : 'remove this course from your list';
                                 if (window.confirm(`Are you sure you want to ${actionText}?`)) {
                                   console.log(`${isPersonalCourse ? 'Deleting' : 'Unenrolling from'} course:`, course.id, course.title);

@@ -18,7 +18,7 @@ import type {
  * - Rate limiting and timeout handling
  */
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://syllaai-ai.onrender.com';
 
 // Error types for better error handling
 export const ApiErrorTypes = {
@@ -67,6 +67,9 @@ class ApiService {
         const token = localStorage.getItem('access_token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+          console.log('Token found and set:', token.substring(0, 20) + '...');
+        } else {
+          console.warn('No access token found in localStorage!');
         }
         
         // Add request ID for tracking
@@ -74,6 +77,7 @@ class ApiService {
         
         if (import.meta.env.DEV) {
           console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+          console.log('Request headers:', config.headers);
         }
         
         return config;
@@ -243,7 +247,21 @@ class ApiService {
   }
 
   async unenrollFromCourse(courseId: string): Promise<void> {
-    await this.client.delete(`/api/courses/${courseId}/unenroll`);
+    console.log('=== API SERVICE UNENROLL DEBUG ===');
+    console.log('Course ID received:', courseId);
+    console.log('Course ID type:', typeof courseId);
+    const url = `/api/courses/${courseId}/unenroll`;
+    console.log('Full URL:', `${this.client.defaults.baseURL}${url}`);
+    
+    try {
+      const response = await this.client.delete(url);
+      console.log('Unenroll response status:', response.status);
+      console.log('Unenroll response data:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('API delete request failed:', error);
+      throw error;
+    }
   }
 
   // School endpoints
