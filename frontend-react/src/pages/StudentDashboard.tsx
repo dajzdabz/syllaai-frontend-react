@@ -72,7 +72,7 @@ const StudentDashboard: React.FC = () => {
     },
   });
 
-  // Delete course mutation
+  // Delete course mutation (for personal courses)
   const deleteMutation = useMutation({
     mutationFn: async (courseId: string) => {
       try {
@@ -92,6 +92,26 @@ const StudentDashboard: React.FC = () => {
     },
   });
 
+  // Unenroll from course mutation (for enrolled courses)
+  const unenrollMutation = useMutation({
+    mutationFn: async (courseId: string) => {
+      try {
+        return await courseService.unenrollFromCourse(courseId);
+      } catch (error: any) {
+        console.error('Unenroll course API error:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      console.log('Unenrolled from course successfully');
+      refetchCourses();
+    },
+    onError: (error: any) => {
+      console.error('Failed to unenroll from course:', error);
+      alert(`Failed to remove course: ${error.message || 'Please try again.'}`);
+    },
+  });
+
   const handleSearch = () => {
     if (searchCrn.trim()) {
       setSearchError(null);
@@ -103,8 +123,17 @@ const StudentDashboard: React.FC = () => {
     enrollMutation.mutate(courseId);
   };
 
-  const handleDeleteCourse = (courseId: string) => {
-    deleteMutation.mutate(courseId);
+  const handleRemoveCourse = (course: Course) => {
+    // Check if this is a personal course (student created it)
+    const isPersonalCourse = course.created_by === user?.id;
+    
+    if (isPersonalCourse) {
+      // Delete the course entirely
+      deleteMutation.mutate(course.id);
+    } else {
+      // Unenroll from the course
+      unenrollMutation.mutate(course.id);
+    }
   };
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
@@ -200,24 +229,24 @@ const StudentDashboard: React.FC = () => {
                                 </Typography>
                               )}
                             </Box>
-                            {course.crn === 'PERSONAL' && (
-                              <Button
-                                size="small"
-                                color="error"
-                                disabled={deleteMutation.isPending}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  if (window.confirm('Are you sure you want to delete this course?')) {
-                                    console.log('Deleting course:', course.id, course.title);
-                                    handleDeleteCourse(course.id);
-                                  }
-                                }}
-                                sx={{ minWidth: 'auto', p: 0.5 }}
-                              >
-                                {deleteMutation.isPending ? '...' : '×'}
-                              </Button>
-                            )}
+                            <Button
+                              size="small"
+                              color="error"
+                              disabled={deleteMutation.isPending || unenrollMutation.isPending}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const isPersonalCourse = course.created_by === user?.id;
+                                const actionText = isPersonalCourse ? 'delete this course' : 'remove this course from your list';
+                                if (window.confirm(`Are you sure you want to ${actionText}?`)) {
+                                  console.log(`${isPersonalCourse ? 'Deleting' : 'Unenrolling from'} course:`, course.id, course.title);
+                                  handleRemoveCourse(course);
+                                }
+                              }}
+                              sx={{ minWidth: 'auto', p: 0.5 }}
+                            >
+                              {(deleteMutation.isPending || unenrollMutation.isPending) ? '...' : '×'}
+                            </Button>
                           </Box>
                         </CardContent>
                       </Card>

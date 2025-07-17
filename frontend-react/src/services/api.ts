@@ -242,6 +242,10 @@ class ApiService {
     await this.client.delete(`/api/courses/${courseId}`);
   }
 
+  async unenrollFromCourse(courseId: string): Promise<void> {
+    await this.client.delete(`/api/courses/${courseId}/unenroll`);
+  }
+
   // School endpoints
   async getSchools(): Promise<School[]> {
     const response = await this.client.get<School[]>('/api/courses/schools');

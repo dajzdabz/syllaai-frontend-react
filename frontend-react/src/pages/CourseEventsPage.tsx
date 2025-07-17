@@ -31,6 +31,7 @@ import {
   Category,
 } from '@mui/icons-material';
 import { courseService } from '../services/courseService';
+import { useAuth } from '../contexts/AuthContext';
 import type { EventCategory } from '../types';
 
 // Category configuration with colors and icons
@@ -93,6 +94,7 @@ const categoryConfig: Record<EventCategory, {
 const CourseEventsPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | 'All'>('All');
 
   // Query for course details
@@ -135,7 +137,7 @@ const CourseEventsPage: React.FC = () => {
     refetchOnWindowFocus: false,
   });
 
-  // Delete course mutation
+  // Delete course mutation (for personal courses)
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (!courseId) throw new Error('No course ID');
@@ -150,8 +152,34 @@ const CourseEventsPage: React.FC = () => {
     },
   });
 
-  const handleDeleteCourse = () => {
-    deleteMutation.mutate();
+  // Unenroll from course mutation (for enrolled courses)
+  const unenrollMutation = useMutation({
+    mutationFn: async () => {
+      if (!courseId) throw new Error('No course ID');
+      return await courseService.unenrollFromCourse(courseId);
+    },
+    onSuccess: () => {
+      navigate('/dashboard');
+    },
+    onError: (error: any) => {
+      console.error('Failed to unenroll from course:', error);
+      alert('Failed to remove course. Please try again.');
+    },
+  });
+
+  const handleRemoveCourse = () => {
+    if (!course) return;
+    
+    // Check if this is a personal course (student created it)
+    const isPersonalCourse = course.created_by === user?.id;
+    
+    if (isPersonalCourse) {
+      // Delete the course entirely
+      deleteMutation.mutate();
+    } else {
+      // Unenroll from the course
+      unenrollMutation.mutate();
+    }
   };
 
   // Filter events by category
@@ -217,17 +245,26 @@ const CourseEventsPage: React.FC = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Course Events
           </Typography>
-          {course?.crn === 'PERSONAL' && (
+          {course && (
             <Button
               color="error"
               variant="outlined"
+              disabled={deleteMutation.isPending || unenrollMutation.isPending}
               onClick={() => {
-                if (window.confirm('Are you sure you want to delete this course and all its events?')) {
-                  handleDeleteCourse();
+                if (!course) return;
+                const isPersonalCourse = course.created_by === user?.id;
+                const actionText = isPersonalCourse 
+                  ? 'delete this course and all its events' 
+                  : 'remove this course from your list';
+                if (window.confirm(`Are you sure you want to ${actionText}?`)) {
+                  handleRemoveCourse();
                 }
               }}
             >
-              Delete Course
+              {(deleteMutation.isPending || unenrollMutation.isPending) 
+                ? 'Removing...' 
+                : (course?.created_by === user?.id ? 'Delete Course' : 'Remove Course')
+              }
             </Button>
           )}
         </Toolbar>

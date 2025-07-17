@@ -43,6 +43,13 @@ class CourseService {
     return apiService.deleteCourse(courseId);
   }
 
+  /**
+   * Unenroll from a course (students only)
+   */
+  async unenrollFromCourse(courseId: string): Promise<void> {
+    return apiService.unenrollFromCourse(courseId);
+  }
+
   // School Management
 
   /**
