@@ -40,6 +40,7 @@ class AuthService {
   private googleOAuth2: any = null;
   private config: GoogleOAuthConfig;
   private isInitialized = false;
+  private selectedRole: 'professor' | 'student' | null = null;
 
   constructor() {
     this.config = {
@@ -118,6 +119,7 @@ class AuthService {
       
       const result = await apiService.authenticate({
         id_token: response.credential,
+        role: this.selectedRole,
       });
 
       console.log('✅ ID token authentication successful');
@@ -135,7 +137,8 @@ class AuthService {
       
       const result = await apiService.authenticate({
         authorization_code: response.code,
-        redirect_uri: this.config.redirectUri
+        redirect_uri: this.config.redirectUri,
+        role: this.selectedRole,
       });
 
       console.log('✅ Auth code authentication successful (with calendar access)');
@@ -166,7 +169,10 @@ class AuthService {
     }));
   }
 
-  async signInWithGoogle(requestCalendarAccess = false): Promise<void> {
+  async signInWithGoogle(role?: 'professor' | 'student', requestCalendarAccess = false): Promise<void> {
+    // Store the selected role for the authentication request
+    this.selectedRole = role || null;
+    
     await this.initializeGoogleAuth(requestCalendarAccess);
     
     if (requestCalendarAccess) {

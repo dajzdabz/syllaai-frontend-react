@@ -1,117 +1,112 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { authService } from '../services/auth';
 import {
   Container,
   Typography,
   Button,
   Box,
-  Grid,
-  Card,
-  AppBar,
-  Toolbar,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 
 const HomePage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // If user is already logged in, redirect to appropriate dashboard
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       navigate(user.is_professor ? '/professor' : '/student');
     }
   }, [user, navigate]);
 
+  useEffect(() => {
+    // Initialize Google Auth when component mounts
+    authService.initializeGoogleAuth().catch((err) => {
+      console.error('Failed to initialize Google Auth:', err);
+      setError('Failed to initialize Google Sign-In');
+    });
+
+    // Listen for auth changes
+    const handleAuthChange = () => {
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        navigate('/dashboard');
+      }
+    };
+
+    window.addEventListener('auth-change', handleAuthChange);
+    return () => window.removeEventListener('auth-change', handleAuthChange);
+  }, [navigate]);
+
+  const handleSignIn = async (role: 'professor' | 'student') => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      await authService.signInWithGoogle(role);
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      setError(error?.response?.data?.detail || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <Box sx={{ minHeight: '100vh' }}>
-      {/* Simple Navigation Bar */}
-      <AppBar position="static" elevation={0} sx={{ mb: 4, bgcolor: 'white', color: 'text.primary' }}>
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: '#f5f5f5',
+      }}
+    >
+      <Container maxWidth="sm">
+        <Box sx={{ textAlign: 'center', bgcolor: 'white', p: 4, borderRadius: 2 }}>
+          <Typography variant="h3" component="h1" sx={{ mb: 2 }}>
             SyllabAI
           </Typography>
-          {user && (
-            <>
-              <Typography variant="body2" sx={{ mr: 2 }}>
-                {user.name}
-              </Typography>
-              <Button onClick={logout} variant="outlined" size="small">
-                Sign Out
-              </Button>
-            </>
+          <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
+            Sign in as:
+          </Typography>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {error}
+            </Alert>
           )}
-        </Toolbar>
-      </AppBar>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Hero Section */}
-        <Box textAlign="center" sx={{ mb: 6 }}>
-          <Typography variant="h2" component="h1" sx={{ mb: 2 }}>
-            SyllabAI
-          </Typography>
-          <Typography variant="h5" color="text.secondary" sx={{ mb: 4 }}>
-            Upload syllabus → Extract dates → Sync to calendar
-          </Typography>
-          <Button
-            component={Link}
-            to="/login"
-            variant="contained"
-            size="large"
-          >
-            Get Started
-          </Button>
-        </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Button
+              onClick={() => handleSignIn('professor')}
+              disabled={loading}
+              variant="contained"
+              size="large"
+              sx={{ py: 2 }}
+            >
+              {loading ? <CircularProgress size={20} /> : 'Professor'}
+            </Button>
+            
+            <Button
+              onClick={() => handleSignIn('student')}
+              disabled={loading}
+              variant="contained"
+              size="large"
+              sx={{ py: 2 }}
+            >
+              {loading ? <CircularProgress size={20} /> : 'Student'}
+            </Button>
+          </Box>
 
-
-        {/* Simple Role Selection */}
-        <Box textAlign="center">
-          <Typography variant="h4" sx={{ mb: 4 }}>
-            Choose Your Role
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>
+            Sign in with Google to continue
           </Typography>
-          <Grid container spacing={4} justifyContent="center">
-            <Grid item xs={12} sm={6} md={4}>
-              <Card
-                component={Link}
-                to="/login"
-                sx={{
-                  p: 4,
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                  '&:hover': { bgcolor: 'grey.50' },
-                }}
-              >
-                <Typography variant="h5" gutterBottom>
-                  Professor
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Upload syllabi and manage courses
-                </Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <Card
-                component={Link}
-                to="/login"
-                sx={{
-                  p: 4,
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                  '&:hover': { bgcolor: 'grey.50' },
-                }}
-              >
-                <Typography variant="h5" gutterBottom>
-                  Student
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Join courses and sync calendar
-                </Typography>
-              </Card>
-            </Grid>
-          </Grid>
         </Box>
       </Container>
     </Box>
