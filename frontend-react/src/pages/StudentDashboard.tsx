@@ -15,17 +15,32 @@ import {
   Paper,
   AppBar,
   Toolbar,
+  Chip,
+  Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { courseService } from '../services/courseService';
 import SyllabusProcessor from '../components/SyllabusProcessor';
 import type { Course } from '../types';
+import { API_BASE_URL } from '../services/api';
 
 const StudentDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const [searchCrn, setSearchCrn] = useState('');
   const [searchResults, setSearchResults] = useState<Course[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [errorAlert, setErrorAlert] = useState<{ message: string; severity: 'error' | 'warning' | 'info' } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; course: Course | null; action: string; description: string }>({ open: false, course: null, action: '', description: '' });
+  
+  // Environment detection
+  const isDevelopment = API_BASE_URL.includes('localhost') || import.meta.env.DEV;
+  const environmentLabel = isDevelopment ? 'Development' : 'Production';
+  const apiEndpoint = API_BASE_URL;
 
   // Query for enrolled courses
   const {
@@ -106,7 +121,8 @@ const StudentDashboard: React.FC = () => {
     },
     onError: (error: any) => {
       console.error('Failed to delete course:', error);
-      alert(`Failed to delete course: ${error.message || 'Please try again.'}`);
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to delete course. Please try again.';
+      setErrorAlert({ message: errorMessage, severity: 'error' });
     },
   });
 
@@ -142,7 +158,8 @@ const StudentDashboard: React.FC = () => {
         status: error.response?.status,
         data: error.response?.data
       });
-      alert(`Failed to remove course: ${error.response?.data?.detail || error.message || 'Please try again.'}`);
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to remove course. Please try again.';
+      setErrorAlert({ message: errorMessage, severity: 'error' });
     },
   });
 
@@ -178,6 +195,28 @@ const StudentDashboard: React.FC = () => {
       unenrollMutation.mutate(course.id);
     }
   };
+  
+  const handleRemoveClick = (course: Course) => {
+    const isPersonalCourse = course.created_by === user?.id;
+    const action = isPersonalCourse ? 'delete' : 'unenroll';
+    const description = isPersonalCourse 
+      ? `permanently delete the personal course "${course.title || course.name || 'Untitled Course'}"?"`
+      : `unenroll from "${course.title || course.name || 'Untitled Course'}"?`;
+    
+    setConfirmDialog({
+      open: true,
+      course,
+      action,
+      description
+    });
+  };
+  
+  const handleConfirmAction = () => {
+    if (confirmDialog.course) {
+      handleRemoveCourse(confirmDialog.course);
+    }
+    setConfirmDialog({ open: false, course: null, action: '', description: '' });
+  };
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
@@ -187,6 +226,15 @@ const StudentDashboard: React.FC = () => {
 
   return (
     <Box sx={{ flexGrow: 1 }}>
+      {/* Environment Banner */}
+      {isDevelopment && (
+        <Alert severity="info" sx={{ mb: 0, borderRadius: 0 }}>
+          <Typography variant="body2">
+            <strong>🚧 DEVELOPMENT MODE</strong> - API: {apiEndpoint} | Environment: {environmentLabel}
+          </Typography>
+        </Alert>
+      )}
+      
       {/* Simple Navigation Bar */}
       <AppBar position="static" elevation={0} sx={{ mb: 4, bgcolor: 'white', color: 'text.primary' }}>
         <Toolbar>
@@ -279,17 +327,10 @@ const StudentDashboard: React.FC = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                const isPersonalCourse = course.created_by === user?.id;
                                 console.log('=== BUTTON CLICK DEBUG ===');
                                 console.log('Course created_by:', course.created_by, typeof course.created_by);
                                 console.log('User ID:', user?.id, typeof user?.id);
-                                console.log('Is personal course?', isPersonalCourse);
-                                
-                                const actionText = isPersonalCourse ? 'delete this course' : 'remove this course from your list';
-                                if (window.confirm(`Are you sure you want to ${actionText}?`)) {
-                                  console.log(`${isPersonalCourse ? 'Deleting' : 'Unenrolling from'} course:`, course.id, course.title);
-                                  handleRemoveCourse(course);
-                                }
+                                handleRemoveClick(course);
                               }}
                               sx={{ minWidth: 'auto', p: 0.5 }}
                             >
@@ -374,6 +415,55 @@ const StudentDashboard: React.FC = () => {
           </Grid>
         </Grid>
       </Container>
+      
+      {/* Error Alert Snackbar */}
+      <Snackbar
+        open={!!errorAlert}
+        autoHideDuration={6000}
+        onClose={() => setErrorAlert(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setErrorAlert(null)}
+          severity={errorAlert?.severity || 'error'}
+          sx={{ width: '100%' }}
+        >
+          {errorAlert?.message}
+        </Alert>
+      </Snackbar>
+      
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog({ open: false, course: null, action: '', description: '' })}
+        aria-labelledby="confirmation-dialog-title"
+        aria-describedby="confirmation-dialog-description"
+      >
+        <DialogTitle id="confirmation-dialog-title">
+          Confirm {confirmDialog.action === 'delete' ? 'Delete' : 'Unenroll'}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="confirmation-dialog-description">
+            Are you sure you want to {confirmDialog.description}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setConfirmDialog({ open: false, course: null, action: '', description: '' })}
+            color="primary"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmAction}
+            color="error"
+            variant="contained"
+            disabled={deleteMutation.isPending || unenrollMutation.isPending}
+          >
+            {confirmDialog.action === 'delete' ? 'Delete Course' : 'Unenroll'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
