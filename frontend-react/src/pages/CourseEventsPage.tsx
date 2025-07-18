@@ -125,12 +125,10 @@ const CourseEventsPage: React.FC = () => {
         return await courseService.getCourseEvents(courseId!);
       } catch (error: any) {
         console.error('Failed to load course events:', error);
-        // For 500 errors (likely personal courses without events), return empty array
-        if (error?.statusCode === 500 || error?.response?.status === 500) {
-          console.log('500 error detected, returning empty events array to prevent retries');
-          return [];
-        }
-        throw error;
+        // For ANY error, return empty array to prevent infinite retries
+        // This is especially important for 500 errors from personal courses
+        console.log('Error detected, returning empty events array to prevent retries');
+        return [];
       }
     },
     enabled: !!courseId,
