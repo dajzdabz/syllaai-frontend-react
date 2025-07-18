@@ -227,27 +227,17 @@ const StudentDashboard: React.FC = () => {
     console.log('Course created_by:', course.created_by);
     console.log('Current user ID:', user?.id);
     
-    // Check if this is a personal course (student created it)
-    const isPersonalCourse = course.created_by === user?.id;
-    console.log('Is personal course?', isPersonalCourse);
-    
-    if (isPersonalCourse) {
-      // Delete the course entirely
-      console.log('Calling deleteMutation with course ID:', course.id);
-      deleteMutation.mutate(course.id);
-    } else {
-      // Unenroll from the course
-      console.log('Calling unenrollMutation with course ID:', course.id);
-      unenrollMutation.mutate(course.id);
-    }
+    // Always unenroll for student dashboard - remove from "My Courses" list
+    console.log('Action: UNENROLL (remove from student course list)');
+    console.log('Calling unenrollMutation with course ID:', course.id);
+    unenrollMutation.mutate(course.id);
   };
   
   const handleRemoveClick = (course: Course) => {
-    const isPersonalCourse = course.created_by === user?.id;
-    const action = isPersonalCourse ? 'delete' : 'unenroll';
-    const description = isPersonalCourse 
-      ? `permanently delete the personal course "${course.title || course.name || 'Untitled Course'}"?"`
-      : `unenroll from "${course.title || course.name || 'Untitled Course'}"?`;
+    // Always default to UNENROLL for student dashboard
+    // Students typically want to remove courses from their list, not delete them entirely
+    const action = 'unenroll';
+    const description = `remove "${course.title || course.name || 'Untitled Course'}" from your course list?`;
     
     setConfirmDialog({
       open: true,
@@ -506,7 +496,7 @@ const StudentDashboard: React.FC = () => {
             variant="contained"
             disabled={deleteMutation.isPending || unenrollMutation.isPending}
           >
-            {confirmDialog.action === 'delete' ? 'Delete Course' : 'Unenroll'}
+            Remove Course
           </Button>
         </DialogActions>
       </Dialog>
