@@ -243,7 +243,28 @@ class ApiService {
   }
 
   async deleteCourse(courseId: string): Promise<void> {
-    await this.client.delete(`/api/courses/${courseId}`);
+    console.log('=== API SERVICE DELETE COURSE DEBUG ===');
+    console.log('Course ID received:', courseId);
+    const url = `/api/courses/${courseId}`;
+    console.log('Full URL:', `${this.client.defaults.baseURL}${url}`);
+    console.log('Environment:', import.meta.env.MODE);
+    
+    try {
+      const response = await this.client.delete(url);
+      console.log('Delete course response status:', response.status);
+      console.log('Delete course response data:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('API delete course request failed:', error);
+      console.error('Request config:', error.config);
+      console.error('Response details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers
+      });
+      throw error;
+    }
   }
 
   async unenrollFromCourse(courseId: string): Promise<void> {
@@ -252,6 +273,8 @@ class ApiService {
     console.log('Course ID type:', typeof courseId);
     const url = `/api/courses/${courseId}/unenroll`;
     console.log('Full URL:', `${this.client.defaults.baseURL}${url}`);
+    console.log('Environment:', import.meta.env.MODE);
+    console.log('Base URL source:', import.meta.env.VITE_API_URL || 'default');
     
     try {
       const response = await this.client.delete(url);
@@ -260,6 +283,13 @@ class ApiService {
       return response.data;
     } catch (error: any) {
       console.error('API delete request failed:', error);
+      console.error('Request config:', error.config);
+      console.error('Response details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers
+      });
       throw error;
     }
   }

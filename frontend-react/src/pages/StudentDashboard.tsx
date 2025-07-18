@@ -41,6 +41,7 @@ const StudentDashboard: React.FC = () => {
   const isDevelopment = API_BASE_URL.includes('localhost') || import.meta.env.DEV;
   const environmentLabel = isDevelopment ? 'Development' : 'Production';
   const apiEndpoint = API_BASE_URL;
+  const showEnvironmentBanner = isDevelopment || import.meta.env.VITE_SHOW_ENV_BANNER === 'true';
 
   // Query for enrolled courses
   const {
@@ -121,7 +122,33 @@ const StudentDashboard: React.FC = () => {
     },
     onError: (error: any) => {
       console.error('Failed to delete course:', error);
-      const errorMessage = error.response?.data?.detail || error.message || 'Failed to delete course. Please try again.';
+      console.error('Full error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method
+      });
+      
+      let errorMessage = 'Failed to delete course. Please try again.';
+      
+      if (error.response?.status === 500) {
+        errorMessage = `Server Error (500): The backend service is experiencing issues. Please try again in a few minutes or contact support if the problem persists.`;
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Course not found. It may have already been deleted.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to delete this course.';
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Add technical details for debugging
+      if (!isDevelopment) {
+        errorMessage += ` (Error ${error.response?.status || 'Unknown'} - API: ${apiEndpoint})`;
+      }
+      
       setErrorAlert({ message: errorMessage, severity: 'error' });
     },
   });
@@ -152,13 +179,33 @@ const StudentDashboard: React.FC = () => {
     },
     onError: (error: any) => {
       console.error('Failed to unenroll from course:', error);
-      console.error('Mutation error details:', {
-        message: error.message,
-        response: error.response,
+      console.error('Full error details:', {
         status: error.response?.status,
-        data: error.response?.data
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method
       });
-      const errorMessage = error.response?.data?.detail || error.message || 'Failed to remove course. Please try again.';
+      
+      let errorMessage = 'Failed to unenroll from course. Please try again.';
+      
+      if (error.response?.status === 500) {
+        errorMessage = `Server Error (500): The backend service is experiencing issues. Please try again in a few minutes or contact support if the problem persists.`;
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Course not found or you are not enrolled in this course.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to unenroll from this course.';
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Add technical details for debugging
+      if (!isDevelopment) {
+        errorMessage += ` (Error ${error.response?.status || 'Unknown'} - API: ${apiEndpoint})`;
+      }
+      
       setErrorAlert({ message: errorMessage, severity: 'error' });
     },
   });
@@ -227,10 +274,10 @@ const StudentDashboard: React.FC = () => {
   return (
     <Box sx={{ flexGrow: 1 }}>
       {/* Environment Banner */}
-      {isDevelopment && (
-        <Alert severity="info" sx={{ mb: 0, borderRadius: 0 }}>
+      {showEnvironmentBanner && (
+        <Alert severity={isDevelopment ? 'info' : 'warning'} sx={{ mb: 0, borderRadius: 0 }}>
           <Typography variant="body2">
-            <strong>🚧 DEVELOPMENT MODE</strong> - API: {apiEndpoint} | Environment: {environmentLabel}
+            <strong>{isDevelopment ? '🚧 DEVELOPMENT MODE' : '🚀 PRODUCTION MODE'}</strong> - API: {apiEndpoint} | Environment: {environmentLabel}
           </Typography>
         </Alert>
       )}
