@@ -15,7 +15,6 @@ import {
   Paper,
   AppBar,
   Toolbar,
-  Chip,
   Snackbar,
   Dialog,
   DialogTitle,
