@@ -6,7 +6,7 @@
   <script>
     // This script handles routing for GitHub Pages SPA
     // It redirects any direct access to routes back to index.html with the route as a parameter
-    const pathSegmentsToKeep = 1; // Change this to match your repository name depth
+    const pathSegmentsToKeep = 2; // For GitHub Pages: /username/repo-name/
     const l = window.location;
     l.replace(
       l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
