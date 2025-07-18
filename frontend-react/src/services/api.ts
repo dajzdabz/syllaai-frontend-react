@@ -139,7 +139,12 @@ class ApiService {
   }
 
   private shouldRetry(error: any): boolean {
-    // Retry on network errors or 5xx server errors
+    // Don't retry course events requests - they often return 500 for personal courses without events
+    if (error.config?.url?.includes('/events') && error.response?.status === 500) {
+      return false;
+    }
+    
+    // Retry on network errors or 5xx server errors (except course events)
     return (
       !error.response || 
       error.code === 'NETWORK_ERROR' ||
