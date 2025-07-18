@@ -68,8 +68,21 @@ class ApiService {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
           console.log('Token found and set:', token.substring(0, 20) + '...');
+          
+          // Check if token is expired
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const isExpired = payload.exp * 1000 < Date.now();
+            if (isExpired) {
+              console.warn('⚠️ Token appears to be expired');
+            } else {
+              console.log('✅ Token is valid, expires at:', new Date(payload.exp * 1000));
+            }
+          } catch (e) {
+            console.warn('⚠️ Could not parse token payload');
+          }
         } else {
-          console.warn('No access token found in localStorage!');
+          console.warn('❌ No access token found in localStorage!');
         }
         
         // Add request ID for tracking
@@ -169,11 +182,22 @@ class ApiService {
           break;
         case 401:
           apiError.type = ApiErrorTypes.AUTHENTICATION_ERROR;
-          apiError.message = 'Please sign in to continue';
+          apiError.message = 'Authentication failed. Please sign in again.';
+          console.log('🔄 401 Error - Token may be expired, triggering re-auth');
           break;
         case 403:
           apiError.type = ApiErrorTypes.AUTHORIZATION_ERROR;
           apiError.message = 'You do not have permission to perform this action';
+          break;
+        case 404:
+          apiError.type = ApiErrorTypes.VALIDATION_ERROR;
+          apiError.message = data?.detail || 'Resource not found';
+          console.log('🔍 404 Error details:', {
+            url: error.config?.url,
+            method: error.config?.method,
+            fullURL: `${error.config?.baseURL || ''}${error.config?.url || ''}`,
+            data: data
+          });
           break;
         case 413:
           apiError.type = ApiErrorTypes.FILE_PROCESSING_ERROR;
@@ -243,26 +267,47 @@ class ApiService {
   }
 
   async deleteCourse(courseId: string): Promise<void> {
-    console.log('=== API SERVICE DELETE COURSE DEBUG ===');
+    console.log('\n=== API SERVICE DELETE COURSE DEBUG ===');
     console.log('Course ID received:', courseId);
+    console.log('Course ID type:', typeof courseId);
+    console.log('Course ID length:', courseId.length);
+    console.log('Is valid UUID format?:', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseId));
+    
     const url = `/api/courses/${courseId}`;
-    console.log('Full URL:', `${this.client.defaults.baseURL}${url}`);
+    const fullURL = `${this.client.defaults.baseURL}${url}`;
+    console.log('Constructed URL:', url);
+    console.log('Full URL:', fullURL);
+    console.log('Base URL:', this.client.defaults.baseURL);
     console.log('Environment:', import.meta.env.MODE);
     
     try {
+      console.log('\ud83d\ude80 Making DELETE request to:', fullURL);
       const response = await this.client.delete(url);
-      console.log('Delete course response status:', response.status);
-      console.log('Delete course response data:', response.data);
+      console.log('\u2705 Delete course response status:', response.status);
+      console.log('\u2705 Delete course response data:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('API delete course request failed:', error);
-      console.error('Request config:', error.config);
-      console.error('Response details:', {
+      console.error('\u274c API delete course request failed:', error);
+      console.error('\ud83d\udd0d Request config:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        baseURL: error.config?.baseURL,
+        fullURL: `${error.config?.baseURL || ''}${error.config?.url || ''}`,
+        headers: error.config?.headers
+      });
+      console.error('\ud83d\udea8 Response details:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
         headers: error.response?.headers
       });
+      
+      if (error.response?.status === 404) {
+        console.error('\ud83d\udd34 404 ERROR: The delete course endpoint may not exist on the backend');
+        console.error('Expected endpoint: DELETE /api/courses/{course_id}');
+        console.error('Attempted URL:', fullURL);
+      }
+      
       throw error;
     }
   }
