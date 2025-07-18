@@ -126,15 +126,18 @@ const CourseEventsPage: React.FC = () => {
       } catch (error: any) {
         console.error('Failed to load course events:', error);
         // For 500 errors (likely personal courses without events), return empty array
-        if (error?.statusCode === 500) {
+        if (error?.statusCode === 500 || error?.response?.status === 500) {
+          console.log('500 error detected, returning empty events array to prevent retries');
           return [];
         }
         throw error;
       }
     },
     enabled: !!courseId,
-    retry: 1,
+    retry: false, // Disable retries completely to prevent infinite loop
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: 30000, // Cache for 30 seconds
   });
 
   // Delete course mutation (for personal courses)
