@@ -135,9 +135,12 @@ const CourseEventsPage: React.FC = () => {
     },
     enabled: !!courseId,
     retry: false, // Disable retries completely to prevent infinite loop
+    retryOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    refetchOnMount: false,
     staleTime: 30000, // Cache for 30 seconds
+    gcTime: 60000, // Cache for 1 minute after component unmount
   });
 
   // Delete course mutation (for personal courses)
