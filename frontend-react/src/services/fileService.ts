@@ -182,11 +182,12 @@ class FileService {
         (uploadProgress) => {
           this.updateProgress(options.onProgress, {
             stage: 'uploading',
-            progress: Math.round(uploadProgress * 0.3), // Upload is 30% of total progress
+            progress: uploadProgress, // Use actual upload progress
             message: `Uploading syllabus... ${uploadProgress}%`,
             uploadProgress
           });
-        }
+        },
+        abortController.signal  // Pass abort signal for cancellation
       );
 
       // Simulate processing stages for better UX
@@ -237,11 +238,12 @@ class FileService {
         (uploadProgress) => {
           this.updateProgress(options.onProgress, {
             stage: 'uploading',
-            progress: Math.round(uploadProgress * 0.3), // Upload is 30% of total progress
+            progress: uploadProgress, // Use actual upload progress
             message: `Uploading syllabus... ${uploadProgress}%`,
             uploadProgress
           });
-        }
+        },
+        abortController.signal  // Pass abort signal for cancellation
       );
 
       // Simulate processing stages for better UX

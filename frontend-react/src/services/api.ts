@@ -423,7 +423,8 @@ class ApiService {
   async uploadSyllabus(
     courseId: string, 
     file: File,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
+    signal?: AbortSignal
   ): Promise<SyllabusUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
@@ -433,6 +434,7 @@ class ApiService {
       formData,
       {
         timeout: 180000, // 3 minute timeout for AI processing
+        signal, // Pass abort signal for cancellation
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -446,7 +448,8 @@ class ApiService {
 
   async uploadPersonalSyllabus(
     file: File,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
+    signal?: AbortSignal
   ): Promise<SyllabusUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
@@ -456,6 +459,7 @@ class ApiService {
       formData,
       {
         timeout: 180000, // 3 minute timeout for AI processing
+        signal, // Pass abort signal for cancellation
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
