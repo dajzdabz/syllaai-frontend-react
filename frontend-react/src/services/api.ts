@@ -233,7 +233,7 @@ class ApiService {
           // If detail is an array, log each element
           if (Array.isArray(data?.detail)) {
             console.log('🔍 Detail array contents:');
-            data.detail.forEach((item, index) => {
+            data.detail.forEach((item: any, index: number) => {
               console.log(`  [${index}]:`, item);
             });
           }
