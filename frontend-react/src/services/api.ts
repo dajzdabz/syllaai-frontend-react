@@ -20,6 +20,10 @@ import type {
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://syllaai-ai.onrender.com';
 
+console.log('🌐 API Base URL:', API_BASE_URL);
+console.log('🌐 Environment:', import.meta.env.MODE);
+console.log('🌐 VITE_API_URL:', import.meta.env.VITE_API_URL);
+
 // Error types for better error handling
 export const ApiErrorTypes = {
   NETWORK_ERROR: 'NETWORK_ERROR',
@@ -82,7 +86,13 @@ class ApiService {
             console.warn('⚠️ Could not parse token payload');
           }
         } else {
-          console.warn('❌ No access token found in localStorage!');
+          // Don't warn about missing token for auth endpoints
+          const isAuthEndpoint = config.url?.includes('/auth/authenticate') || 
+                                config.url?.includes('/auth/google') ||
+                                config.url?.includes('/auth/logout');
+          if (!isAuthEndpoint) {
+            console.warn('❌ No access token found in localStorage!');
+          }
         }
         
         // Add request ID for tracking

@@ -162,6 +162,10 @@ class AuthService {
       const result = await apiService.authenticate({
         id_token: response.credential,
         role: this.selectedRole || undefined,
+      }).catch(error => {
+        console.error('🚨 AUTHENTICATION API CALL FAILED:', error);
+        console.error('🚨 Full error object:', JSON.stringify(error, null, 2));
+        throw error;
       });
 
       console.log('✅ ID token authentication successful');
