@@ -403,7 +403,15 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                     </Typography>
-                    <Button variant="contained" onClick={handleUpload} sx={{ mt: 2 }}>
+                    <Button 
+                      variant="contained" 
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent parent onClick from firing
+                        console.log('📋 Process button clicked');
+                        handleUpload();
+                      }} 
+                      sx={{ mt: 2 }}
+                    >
                       Process Syllabus
                     </Button>
                   </Box>
