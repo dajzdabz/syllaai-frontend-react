@@ -56,9 +56,7 @@ class ApiService {
     this.client = axios.create({
       baseURL: API_BASE_URL,
       timeout: 30000, // 30 second timeout
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      // Don't set default Content-Type - let each request specify as needed
     });
 
     this.setupInterceptors();
@@ -97,6 +95,11 @@ class ApiService {
         
         // Add request ID for tracking
         config.headers['X-Request-ID'] = this.generateRequestId();
+        
+        // Set Content-Type for JSON requests (not FormData)
+        if (config.data && !(config.data instanceof FormData)) {
+          config.headers['Content-Type'] = 'application/json';
+        }
         
         if (import.meta.env.DEV) {
           console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
