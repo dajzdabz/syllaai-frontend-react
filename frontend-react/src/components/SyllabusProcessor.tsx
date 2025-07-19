@@ -114,18 +114,28 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
 
   // File selection handler
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('🔥 handleFileSelect CALLED at', new Date().toISOString());
+    console.log('🔥 Event target:', event.target);
+    console.log('🔥 Event target files:', event.target.files);
     const file = event.target.files?.[0];
     console.log('📁 File selected:', file?.name, file?.size);
     if (file) {
       console.log('✅ Setting file in state');
+      console.log('✅ Previous selectedFile state:', selectedFile?.name || 'null');
       setSelectedFile(file);
       setError(null);
       setResult(null);
       setCurrentStage('idle');
       setProgress(0);
-      console.log('✅ File state updated');
+      console.log('✅ File state updated, new file:', file.name);
+      // Force re-render check
+      setTimeout(() => {
+        console.log('🔍 Post-setState selectedFile check:', selectedFile?.name || 'still null');
+      }, 100);
+    } else {
+      console.log('❌ No file found in event.target.files');
     }
-  }, []);
+  }, [selectedFile]);
 
   // Drag and drop handlers
   const handleDragOver = useCallback((event: React.DragEvent) => {
@@ -133,14 +143,18 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
   }, []);
 
   const handleDrop = useCallback((event: React.DragEvent) => {
+    console.log('🎯 handleDrop CALLED at', new Date().toISOString());
     event.preventDefault();
     const file = event.dataTransfer.files[0];
+    console.log('🎯 Dropped file:', file?.name, file?.size);
     if (file) {
+      console.log('🎯 Setting dropped file in state');
       setSelectedFile(file);
       setError(null);
       setResult(null);
       setCurrentStage('idle');
       setProgress(0);
+      console.log('🎯 Dropped file state updated:', file.name);
     }
   }, []);
 
@@ -358,8 +372,15 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={() => {
+                console.log('🖱️ Upload area clicked at', new Date().toISOString());
+                console.log('🖱️ Current selectedFile:', selectedFile?.name || 'null');
                 if (!selectedFile) {
-                  document.getElementById('file-input')?.click();
+                  console.log('🖱️ Triggering file input click');
+                  const fileInput = document.getElementById('file-input');
+                  console.log('🖱️ File input element:', fileInput);
+                  fileInput?.click();
+                } else {
+                  console.log('🖱️ File already selected, not triggering input');
                 }
               }}
             >

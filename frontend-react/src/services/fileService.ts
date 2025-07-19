@@ -331,46 +331,7 @@ class FileService {
     onProgress?.(progress);
   }
 
-  private async simulateProcessingStages(options: FileUploadOptions): Promise<void> {
-    // Stage 2: Text extraction
-    options.onStageChange?.('extracting');
-    this.updateProgress(options.onProgress, {
-      stage: 'extracting',
-      progress: 40,
-      message: 'Extracting text from document...'
-    });
-    await this.delay(1000);
-
-    // Stage 3: AI analysis
-    options.onStageChange?.('ai-analyzing');
-    this.updateProgress(options.onProgress, {
-      stage: 'ai-analyzing',
-      progress: 70,
-      message: 'AI is analyzing syllabus content...'
-    });
-    await this.delay(2000);
-
-    // Stage 4: Creating events
-    options.onStageChange?.('creating-events');
-    this.updateProgress(options.onProgress, {
-      stage: 'creating-events',
-      progress: 90,
-      message: 'Creating calendar events...'
-    });
-    await this.delay(1000);
-
-    // Stage 5: Complete
-    options.onStageChange?.('complete');
-    this.updateProgress(options.onProgress, {
-      stage: 'complete',
-      progress: 100,
-      message: 'Syllabus processed successfully!'
-    });
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
+  // Removed simulateProcessingStages and delay - no longer needed as real processing handles stages
 
   private getErrorMessage(error: any): string {
     if (typeof error === 'string') {
