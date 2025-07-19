@@ -221,6 +221,14 @@ class ApiService {
         case 422:
           apiError.type = ApiErrorTypes.VALIDATION_ERROR;
           apiError.message = data?.detail || 'Validation error';
+          console.log('🚨 422 VALIDATION ERROR DEBUG:', {
+            fullResponse: data,
+            detail: data?.detail,
+            message: data?.message,
+            errors: data?.errors,
+            url: error.config?.url,
+            method: error.config?.method
+          });
           break;
         case 429:
           apiError.message = 'Too many requests. Please try again later.';
