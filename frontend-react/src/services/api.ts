@@ -224,11 +224,19 @@ class ApiService {
           console.log('🚨 422 VALIDATION ERROR DEBUG:', {
             fullResponse: data,
             detail: data?.detail,
+            detailArray: Array.isArray(data?.detail) ? data.detail : null,
             message: data?.message,
             errors: data?.errors,
             url: error.config?.url,
             method: error.config?.method
           });
+          // If detail is an array, log each element
+          if (Array.isArray(data?.detail)) {
+            console.log('🔍 Detail array contents:');
+            data.detail.forEach((item, index) => {
+              console.log(`  [${index}]:`, item);
+            });
+          }
           break;
         case 429:
           apiError.message = 'Too many requests. Please try again later.';
