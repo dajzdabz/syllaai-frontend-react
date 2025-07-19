@@ -153,6 +153,11 @@ class AuthService {
   private async handleCredentialResponse(response: GoogleCredentialResponse): Promise<void> {
     try {
       console.log('🔧 Handling Google credential response (ID token flow)');
+      console.log('📤 Sending authentication request with:', {
+        hasIdToken: !!response.credential,
+        idTokenLength: response.credential?.length,
+        role: this.selectedRole
+      });
       
       const result = await apiService.authenticate({
         id_token: response.credential,
@@ -160,10 +165,29 @@ class AuthService {
       });
 
       console.log('✅ ID token authentication successful');
-      this.storeAuthData(result);
+      console.log('📥 Authentication response:', {
+        hasAccessToken: !!result.access_token,
+        tokenType: result.token_type,
+        expiresIn: result.expires_in,
+        user: result.user
+      });
       
-    } catch (error) {
+      this.storeAuthData(result);
+      console.log('💾 Auth data stored in localStorage');
+      
+    } catch (error: any) {
       console.error('❌ ID token authentication failed:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        type: error.type,
+        statusCode: error.statusCode,
+        response: error.response?.data || error.details
+      });
+      
+      // Show user-friendly error message
+      const errorMessage = error.response?.data?.detail || error.message || 'Authentication failed';
+      alert(`Authentication failed: ${errorMessage}`);
+      
       throw error;
     }
   }

@@ -240,8 +240,33 @@ class ApiService {
     redirect_uri?: string;
     role?: 'professor' | 'student' | 'admin';
   }): Promise<AuthResponse> {
-    const response = await this.client.post<AuthResponse>('/api/auth/authenticate', payload);
-    return response.data;
+    console.log('🔐 Authenticating with payload:', {
+      hasIdToken: !!payload.id_token,
+      idTokenLength: payload.id_token?.length,
+      hasAuthCode: !!payload.authorization_code,
+      authCodeLength: payload.authorization_code?.length,
+      role: payload.role,
+      redirectUri: payload.redirect_uri
+    });
+    
+    try {
+      const response = await this.client.post<AuthResponse>('/api/auth/authenticate', payload);
+      console.log('🔐 Authentication response received:', {
+        status: response.status,
+        hasData: !!response.data,
+        dataKeys: response.data ? Object.keys(response.data) : []
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('🔐 Authentication request failed:', {
+        url: '/api/auth/authenticate',
+        method: 'POST',
+        error: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      throw error;
+    }
   }
 
   async getCurrentUser(): Promise<User> {
