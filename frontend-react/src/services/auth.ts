@@ -160,7 +160,7 @@ class AuthService {
       });
       
       const result = await apiService.authenticate({
-        id_token: response.credential,
+        credential: response.credential,
         role: this.selectedRole || undefined,
       }).catch(error => {
         console.error('🚨 AUTHENTICATION API CALL FAILED:', error);

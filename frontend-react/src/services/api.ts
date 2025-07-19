@@ -265,14 +265,14 @@ class ApiService {
 
   // Authentication endpoints
   async authenticate(payload: {
-    id_token?: string;
+    credential?: string;
     authorization_code?: string;
     redirect_uri?: string;
     role?: 'professor' | 'student' | 'admin';
   }): Promise<AuthResponse> {
     console.log('🔐 Authenticating with payload:', {
-      hasIdToken: !!payload.id_token,
-      idTokenLength: payload.id_token?.length,
+      hasCredential: !!payload.credential,
+      credentialLength: payload.credential?.length,
       hasAuthCode: !!payload.authorization_code,
       authCodeLength: payload.authorization_code?.length,
       role: payload.role,
