@@ -70,6 +70,7 @@ class ApiService {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
           console.log('Token found and set:', token.substring(0, 20) + '...');
+          console.log('🔍 API Request debug - URL:', config.url, 'Method:', config.method);
           
           // Check if token is expired
           try {
