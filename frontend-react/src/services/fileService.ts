@@ -190,8 +190,12 @@ class FileService {
         abortController.signal  // Pass abort signal for cancellation
       );
 
-      // Simulate processing stages for better UX
-      await this.simulateProcessingStages(options);
+      // Upload and processing completed - show completion immediately
+      this.updateProgress(options.onProgress, {
+        stage: 'complete',
+        progress: 100,
+        message: 'Syllabus processed successfully!'
+      });
 
       options.onComplete?.(result);
       return result;
@@ -246,8 +250,12 @@ class FileService {
         abortController.signal  // Pass abort signal for cancellation
       );
 
-      // Simulate processing stages for better UX
-      await this.simulateProcessingStages(options);
+      // Upload and processing completed - show completion immediately
+      this.updateProgress(options.onProgress, {
+        stage: 'complete',
+        progress: 100,
+        message: 'Syllabus processed successfully!'
+      });
 
       options.onComplete?.(result);
       return result;
