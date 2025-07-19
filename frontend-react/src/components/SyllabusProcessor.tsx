@@ -115,12 +115,15 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
   // File selection handler
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    console.log('📁 File selected:', file?.name, file?.size);
     if (file) {
+      console.log('✅ Setting file in state');
       setSelectedFile(file);
       setError(null);
       setResult(null);
       setCurrentStage('idle');
       setProgress(0);
+      console.log('✅ File state updated');
     }
   }, []);
 
@@ -361,28 +364,31 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
               }}
             >
               <CloudUpload sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-              {selectedFile ? (
-                <Box>
-                  <Typography variant="h6" gutterBottom>
-                    {selectedFile.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                  </Typography>
-                  <Button variant="contained" onClick={handleUpload} sx={{ mt: 2 }}>
-                    Process Syllabus
-                  </Button>
-                </Box>
-              ) : (
-                <Box>
-                  <Typography variant="h6" gutterBottom>
-                    Drop your syllabus here or click to browse
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Supports PDF, DOCX, and TXT files (max 10MB)
-                  </Typography>
-                </Box>
-              )}
+              {(() => {
+                console.log('🔍 Render check - selectedFile:', selectedFile?.name || 'null');
+                return selectedFile ? (
+                  <Box>
+                    <Typography variant="h6" gutterBottom>
+                      {selectedFile.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </Typography>
+                    <Button variant="contained" onClick={handleUpload} sx={{ mt: 2 }}>
+                      Process Syllabus
+                    </Button>
+                  </Box>
+                ) : (
+                  <Box>
+                    <Typography variant="h6" gutterBottom>
+                      Drop your syllabus here or click to browse
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Supports PDF, DOCX, and TXT files (max 10MB)
+                    </Typography>
+                  </Box>
+                );
+              })()}
               <input
                 id="file-input"
                 type="file"
