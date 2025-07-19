@@ -121,21 +121,16 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
     console.log('📁 File selected:', file?.name, file?.size);
     if (file) {
       console.log('✅ Setting file in state');
-      console.log('✅ Previous selectedFile state:', selectedFile?.name || 'null');
       setSelectedFile(file);
       setError(null);
       setResult(null);
       setCurrentStage('idle');
       setProgress(0);
       console.log('✅ File state updated, new file:', file.name);
-      // Force re-render check
-      setTimeout(() => {
-        console.log('🔍 Post-setState selectedFile check:', selectedFile?.name || 'still null');
-      }, 100);
     } else {
       console.log('❌ No file found in event.target.files');
     }
-  }, [selectedFile]);
+  }, []); // Remove selectedFile dependency to avoid closure issues
 
   // Drag and drop handlers
   const handleDragOver = useCallback((event: React.DragEvent) => {
@@ -179,19 +174,30 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
 
   // Upload and process syllabus
   const handleUpload = useCallback(async () => {
-    if (!selectedFile) return;
+    console.log('🚀 handleUpload CALLED at', new Date().toISOString());
+    console.log('🚀 Selected file:', selectedFile?.name, selectedFile?.size);
+    console.log('🚀 Mode:', mode);
+    console.log('🚀 Course ID:', courseId);
+    
+    if (!selectedFile) {
+      console.log('❌ No file selected, returning');
+      return;
+    }
 
     // Validate for professor mode
     if (mode === 'professor' && !courseId) {
+      console.log('❌ Professor mode but no course ID');
       setError('Course ID is required for professor uploads');
       return;
     }
 
+    console.log('✅ Starting upload process...');
     setIsProcessing(true);
     setError(null);
     setCurrentStage('uploading');
 
     try {
+      console.log('📤 Calling fileService upload for mode:', mode);
       const uploadResult = mode === 'professor' 
         ? await fileService.uploadProfessorSyllabus(courseId!, selectedFile, {
             onProgress: handleProgress,
@@ -202,11 +208,13 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
             onStageChange: setCurrentStage
           });
 
+      console.log('✅ Upload complete, result:', uploadResult);
       setResult(uploadResult);
       setShowResults(true);
       onComplete?.(uploadResult);
 
     } catch (err: unknown) {
+      console.error('❌ Upload error:', err);
       let errorMessage = 'Upload failed';
       if (err && typeof err === 'object' && 'message' in err) {
         errorMessage = String((err as any).message);
