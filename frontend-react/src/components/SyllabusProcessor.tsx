@@ -209,8 +209,11 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
           });
 
       console.log('✅ Upload complete, result:', uploadResult);
+      console.log('🎯 Setting result state...');
       setResult(uploadResult);
+      console.log('🎯 Setting showResults to true...');
       setShowResults(true);
+      console.log('🎯 States updated, dialog should show');
       onComplete?.(uploadResult);
 
     } catch (err: unknown) {
@@ -244,7 +247,14 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
 
   // Save as personal course (student mode)
   const handleSaveAsCourse = useCallback(async () => {
-    if (!result?.extracted_events) return;
+    console.log('🔥 handleSaveAsCourse called');
+    console.log('🔥 result:', result);
+    console.log('🔥 extracted_events:', result?.extracted_events?.length || 0);
+    
+    if (!result?.extracted_events) {
+      console.log('❌ No extracted events, returning');
+      return;
+    }
 
     try {
       const courseTitle = result.course_metadata?.course_title || `Syllabus Upload ${new Date().toLocaleDateString()}`;
@@ -498,9 +508,13 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       </Card>
 
       {/* Results Dialog */}
+      {console.log('🔍 Dialog render - showResults:', showResults, 'result:', result?.extracted_events?.length || 0)}
       <Dialog 
         open={showResults} 
-        onClose={() => setShowResults(false)}
+        onClose={() => {
+          console.log('🔍 Dialog onClose called');
+          setShowResults(false);
+        }}
         maxWidth="md"
         fullWidth
       >
