@@ -260,13 +260,19 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       const courseTitle = result.course_metadata?.course_title || `Syllabus Upload ${new Date().toLocaleDateString()}`;
       const semester = result.course_metadata?.semester || '2025SP';
       
+      console.log('🔄 About to call courseService.saveToMyCourses with:', {
+        course_title: courseTitle,
+        semester,
+        events: result.extracted_events.length + ' events'
+      });
+      
       const savedCourse = await courseService.saveToMyCourses({
         course_title: courseTitle,
         semester,
         events: result.extracted_events
       });
       
-      console.log('Course saved successfully:', savedCourse);
+      console.log('✅ Course saved successfully:', savedCourse);
       
       // Show success message
       setError(null);
@@ -281,11 +287,14 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       }, 1000);
       
     } catch (err: unknown) {
-      console.error('Failed to save course:', err);
+      console.error('❌ Failed to save course:', err);
+      console.error('❌ Error type:', typeof err);
+      console.error('❌ Error details:', err);
       let errorMessage = 'Failed to save course';
       if (err && typeof err === 'object' && 'message' in err) {
         errorMessage = String((err as any).message);
       }
+      console.error('❌ Setting error message:', errorMessage);
       setError(errorMessage);
     }
   }, [result, onClose, resetFileInput]);
