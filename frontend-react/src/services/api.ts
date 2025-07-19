@@ -55,7 +55,7 @@ class ApiService {
   constructor() {
     this.client = axios.create({
       baseURL: API_BASE_URL,
-      timeout: 30000, // 30 second timeout
+      timeout: 150000, // 2.5 minute timeout to allow for AI processing
       // Don't set default Content-Type - let each request specify as needed
     });
 
@@ -432,7 +432,7 @@ class ApiService {
       `/api/courses/${courseId}/syllabus`,
       formData,
       {
-        timeout: 120000, // 2 minute timeout for file processing
+        timeout: 180000, // 3 minute timeout for AI processing
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -455,7 +455,7 @@ class ApiService {
       '/api/courses/student-syllabus',
       formData,
       {
-        timeout: 120000, // 2 minute timeout for file processing
+        timeout: 180000, // 3 minute timeout for AI processing
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
