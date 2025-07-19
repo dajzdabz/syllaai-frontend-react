@@ -508,7 +508,10 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       </Card>
 
       {/* Results Dialog */}
-      {console.log('🔍 Dialog render - showResults:', showResults, 'result:', result?.extracted_events?.length || 0)}
+      {(() => {
+        console.log('🔍 Dialog render - showResults:', showResults, 'result:', result?.extracted_events?.length || 0);
+        return null;
+      })()}
       <Dialog 
         open={showResults} 
         onClose={() => {
