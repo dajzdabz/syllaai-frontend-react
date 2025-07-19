@@ -413,9 +413,6 @@ class ApiService {
       `/api/courses/${courseId}/syllabus`,
       formData,
       {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
         timeout: 120000, // 2 minute timeout for file processing
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
@@ -439,9 +436,6 @@ class ApiService {
       '/api/courses/student-syllabus',
       formData,
       {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
         timeout: 120000, // 2 minute timeout for file processing
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
