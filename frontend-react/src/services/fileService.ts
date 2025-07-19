@@ -21,12 +21,9 @@ export const FILE_VALIDATION_CONFIG = {
   allowedTypes: [
     'application/pdf',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-    'application/msword', // .doc
-    'text/plain',
-    'application/rtf',
-    'application/vnd.oasis.opendocument.text' // .odt
+    'text/plain'
   ],
-  allowedExtensions: ['.pdf', '.docx', '.doc', '.txt', '.rtf', '.odt'],
+  allowedExtensions: ['.pdf', '.docx', '.txt'],
   minSizeBytes: 100, // 100 bytes minimum
 };
 

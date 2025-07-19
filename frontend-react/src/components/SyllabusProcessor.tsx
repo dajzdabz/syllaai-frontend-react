@@ -386,7 +386,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
               <input
                 id="file-input"
                 type="file"
-                accept=".pdf,.docx,.doc,.txt,.rtf,.odt"
+                accept=".pdf,.docx,.txt"
                 style={{ display: 'none' }}
                 onChange={handleFileSelect}
               />
