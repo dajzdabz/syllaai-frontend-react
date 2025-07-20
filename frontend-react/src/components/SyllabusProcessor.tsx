@@ -111,6 +111,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SyllabusUploadResponse | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // File selection handler
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -276,15 +277,16 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       
       // Show success message
       setError(null);
-      setResult(null);
+      setSuccessMessage(`Successfully saved "${savedCourse.title}" to My Courses!`);
       setCurrentStage('complete');
       
       // Close dialog and reset after a brief delay to show success
       setTimeout(() => {
         resetFileInput();
         setShowResults(false);
+        setSuccessMessage(null);
         onClose?.();
-      }, 1000);
+      }, 2000);
       
     } catch (err: unknown) {
       console.error('❌ Failed to save course:', err);
@@ -542,13 +544,22 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
           )}
         </DialogTitle>
         <DialogContent>
+          {successMessage && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {successMessage}
+            </Alert>
+          )}
           {result?.extracted_events && renderEventList(result.extracted_events)}
         </DialogContent>
         <DialogActions>
           {mode === 'student' && (
             <>
-              <Button onClick={handleSaveAsCourse} color="primary">
-                Save as My Course
+              <Button 
+                onClick={handleSaveAsCourse} 
+                color="primary"
+                disabled={!!successMessage}
+              >
+                {successMessage ? 'Saved!' : 'Save as My Course'}
               </Button>
               <Button onClick={handleExportToCalendar} color="primary">
                 Export to Calendar
