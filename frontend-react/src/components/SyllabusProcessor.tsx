@@ -609,15 +609,15 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
               <strong>Title:</strong> {result?.course_metadata?.course_title || 'Syllabus Upload'}
             </Typography>
             
-            {result?.course_metadata?.course_code && (
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                <strong>Course Code:</strong> {result.course_metadata.course_code}
-              </Typography>
-            )}
-            
             {result?.course_metadata?.instructor_name && (
               <Typography variant="body2" sx={{ mb: 1 }}>
                 <strong>Instructor:</strong> {result.course_metadata.instructor_name}
+              </Typography>
+            )}
+            
+            {result?.course_metadata?.university && (
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                <strong>University:</strong> {result.course_metadata.university}
               </Typography>
             )}
             
