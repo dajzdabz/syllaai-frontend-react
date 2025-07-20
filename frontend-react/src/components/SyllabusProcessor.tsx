@@ -112,6 +112,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
   const [result, setResult] = useState<SyllabusUploadResponse | null>(null);
   const [showResults, setShowResults] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   // File selection handler
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -246,11 +247,21 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
     }
   }, [result, onClose]);
 
-  // Save as personal course (student mode)
-  const handleSaveAsCourse = useCallback(async () => {
-    console.log('🔥 handleSaveAsCourse called');
-    console.log('🔥 result:', result);
-    console.log('🔥 extracted_events:', result?.extracted_events?.length || 0);
+  // Show confirmation dialog with course details
+  const handleSaveAsCourse = useCallback(() => {
+    console.log('🔥 handleSaveAsCourse called - showing confirmation');
+    
+    if (!result?.extracted_events) {
+      console.log('❌ No extracted events, returning');
+      return;
+    }
+    
+    setShowConfirmation(true);
+  }, [result]);
+
+  // Actually save the course after confirmation
+  const handleConfirmSave = useCallback(async () => {
+    console.log('🔥 handleConfirmSave called');
     
     if (!result?.extracted_events) {
       console.log('❌ No extracted events, returning');
@@ -279,6 +290,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       setError(null);
       setSuccessMessage(`Successfully saved "${savedCourse.title}" to My Courses!`);
       setCurrentStage('complete');
+      setShowConfirmation(false);
       
       // Close dialog and reset after a brief delay to show success
       setTimeout(() => {
@@ -298,6 +310,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       }
       console.error('❌ Setting error message:', errorMessage);
       setError(errorMessage);
+      setShowConfirmation(false);
     }
   }, [result, onClose, resetFileInput]);
 
@@ -568,6 +581,65 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
           )}
           <Button onClick={() => setShowResults(false)}>
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Course Confirmation Dialog */}
+      <Dialog
+        open={showConfirmation}
+        onClose={() => setShowConfirmation(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Confirm Course Information
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" gutterBottom>
+            Please confirm the course information extracted from your syllabus:
+          </Typography>
+          
+          <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+            <Typography variant="subtitle2" color="primary" gutterBottom>
+              Course Details:
+            </Typography>
+            
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              <strong>Title:</strong> {result?.course_metadata?.course_title || 'Syllabus Upload'}
+            </Typography>
+            
+            {result?.course_metadata?.course_code && (
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                <strong>Course Code:</strong> {result.course_metadata.course_code}
+              </Typography>
+            )}
+            
+            {result?.course_metadata?.instructor_name && (
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                <strong>Instructor:</strong> {result.course_metadata.instructor_name}
+              </Typography>
+            )}
+            
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              <strong>Semester:</strong> {result?.course_metadata?.semester || '2025SP'}
+            </Typography>
+            
+            <Typography variant="body2">
+              <strong>Events:</strong> {result?.extracted_events?.length || 0} events will be added
+            </Typography>
+          </Box>
+          
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            This will create a new course in "My Courses" with all the extracted events.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowConfirmation(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmSave} variant="contained" color="primary">
+            Save to My Courses
           </Button>
         </DialogActions>
       </Dialog>
