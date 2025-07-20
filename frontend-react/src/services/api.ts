@@ -3,7 +3,7 @@ import type { AxiosInstance } from 'axios';
 import type { 
   User, Course, CourseEvent, School, 
   AuthResponse, CourseCreateMVP, CourseSearchMVP,
-  SyllabusUploadResponse, CourseEventCreate
+  SyllabusUploadResponse, CourseEventCreate, EventCategory
 } from '../types';
 
 /**
