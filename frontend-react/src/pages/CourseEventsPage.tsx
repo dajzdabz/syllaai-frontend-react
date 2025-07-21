@@ -94,6 +94,12 @@ const categoryConfig: Record<EventCategory, {
     buttonColor: 'error' as const,
     icon: Assignment, 
     bgColor: '#ffebee' 
+  },
+  EXAM: { 
+    chipColor: 'error' as const,
+    buttonColor: 'error' as const,
+    icon: Assignment, 
+    bgColor: '#ffebee' 
   }
 };
 

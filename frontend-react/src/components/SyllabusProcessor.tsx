@@ -16,6 +16,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  TextField,
+  Grid,
 } from '@mui/material';
 import {
   CloudUpload,
@@ -113,6 +115,8 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
   const [showResults, setShowResults] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [editableCourseTitle, setEditableCourseTitle] = useState('');
+  const [editableSemester, setEditableSemester] = useState('');
 
   // File selection handler
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -256,6 +260,12 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       return;
     }
     
+    // Pre-populate editable fields with extracted data or smart defaults
+    const extractedTitle = result.course_metadata?.course_title || '';
+    const extractedSemester = result.course_metadata?.semester || '';
+    
+    setEditableCourseTitle(extractedTitle || `My Course - ${new Date().toLocaleDateString()}`);
+    setEditableSemester(extractedSemester || '2025SP');
     setShowConfirmation(true);
   }, [result]);
 
@@ -269,18 +279,16 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
     }
 
     try {
-      const courseTitle = result.course_metadata?.course_title || `Syllabus Upload ${new Date().toLocaleDateString()}`;
-      const semester = result.course_metadata?.semester || '2025SP';
-      
+      // Use the user-edited values from the confirmation dialog
       console.log('🔄 About to call courseService.saveToMyCourses with:', {
-        course_title: courseTitle,
-        semester,
+        course_title: editableCourseTitle,
+        semester: editableSemester,
         events: result.extracted_events.length + ' events'
       });
       
       const savedCourse = await courseService.saveToMyCourses({
-        course_title: courseTitle,
-        semester,
+        course_title: editableCourseTitle,
+        semester: editableSemester,
         events: result.extracted_events
       });
       
@@ -288,7 +296,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       
       // Show success message
       setError(null);
-      setSuccessMessage(`Successfully saved "${savedCourse.title}" to My Courses!`);
+      setSuccessMessage(`Successfully saved "${editableCourseTitle}" to My Courses!`);
       setCurrentStage('complete');
       setShowConfirmation(false);
       
@@ -312,7 +320,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       setError(errorMessage);
       setShowConfirmation(false);
     }
-  }, [result, onClose, resetFileInput]);
+  }, [result, onClose, resetFileInput, editableCourseTitle, editableSemester]);
 
   // Render processing stage indicator
   const renderStageIndicator = (stage: ProcessingStageInfo, index: number) => {
@@ -602,12 +610,31 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
           
           <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
             <Typography variant="subtitle2" color="primary" gutterBottom>
-              Course Details:
+              Course Details (you can edit these):
             </Typography>
             
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>Title:</strong> {result?.course_metadata?.course_title || 'Syllabus Upload'}
-            </Typography>
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Course Title"
+                  value={editableCourseTitle}
+                  onChange={(e) => setEditableCourseTitle(e.target.value)}
+                  placeholder="Enter course title"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Semester"
+                  value={editableSemester}
+                  onChange={(e) => setEditableSemester(e.target.value)}
+                  placeholder="e.g., 2025SP, Fall 2024"
+                  size="small"
+                />
+              </Grid>
+            </Grid>
             
             {result?.course_metadata?.course_code && (
               <Typography variant="body2" sx={{ mb: 1 }}>
@@ -626,10 +653,6 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
                 <strong>University:</strong> {result.course_metadata.university}
               </Typography>
             )}
-            
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>Semester:</strong> {result?.course_metadata?.semester || '2025SP'}
-            </Typography>
             
             <Typography variant="body2">
               <strong>Events:</strong> {result?.extracted_events?.length || 0} events will be added

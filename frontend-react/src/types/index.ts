@@ -56,7 +56,8 @@ export type EventCategory =
   | 'Presentation'
   | 'Class'
   | 'Other'
-  | 'ASSESSMENT';
+  | 'ASSESSMENT'
+  | 'EXAM';
 
 export interface School {
   id: number;
