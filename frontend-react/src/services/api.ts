@@ -477,6 +477,15 @@ class ApiService {
     await this.client.post('/api/student-events/export-to-calendar', events);
   }
 
+  async getGoogleCalendarAuthUrl(): Promise<{ oauth_url: string }> {
+    const response = await this.client.get<{ oauth_url: string }>('/api/student-events/google-calendar-auth');
+    return response.data;
+  }
+
+  async handleGoogleCalendarCallback(code: string): Promise<void> {
+    await this.client.post('/api/student-events/google-calendar-callback', { code });
+  }
+
   async saveToMyCourses(data: {
     course_title: string;
     semester?: string;

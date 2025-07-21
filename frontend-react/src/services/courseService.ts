@@ -109,6 +109,20 @@ class CourseService {
   }
 
   /**
+   * Get Google Calendar OAuth URL for authentication
+   */
+  async getGoogleCalendarAuthUrl(): Promise<{ oauth_url: string }> {
+    return apiService.getGoogleCalendarAuthUrl();
+  }
+
+  /**
+   * Handle Google Calendar OAuth callback
+   */
+  async handleGoogleCalendarCallback(code: string): Promise<void> {
+    return apiService.handleGoogleCalendarCallback(code);
+  }
+
+  /**
    * Save extracted events as a personal course
    */
   async saveToMyCourses(data: {

@@ -243,11 +243,54 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
     if (!result?.extracted_events) return;
 
     try {
+      console.log('🗓️ Starting calendar export with', result.extracted_events.length, 'events');
       await courseService.exportToCalendar(result.extracted_events);
-      // Show success message or close dialog
-      onClose?.();
-    } catch (err: unknown) {
-      setError('Failed to export to calendar');
+      
+      // Show success message
+      setError(null);
+      setSuccessMessage('Successfully exported events to Google Calendar!');
+      
+      // Close dialog after a brief delay to show success
+      setTimeout(() => {
+        onClose?.();
+        setSuccessMessage(null);
+      }, 2000);
+      
+    } catch (err: any) {
+      console.error('❌ Calendar export failed:', err);
+      
+      // Check if it's an authentication error
+      if (err.response?.status === 401 || err.response?.status === 403 || 
+          err.response?.data?.detail?.includes('auth') ||
+          err.response?.data?.detail?.includes('Google Calendar access required')) {
+        
+        try {
+          console.log('🔐 Calendar auth required, getting OAuth URL...');
+          const authResponse = await courseService.getGoogleCalendarAuthUrl();
+          
+          // Show user-friendly message with OAuth link
+          setError(
+            `To export events to Google Calendar, you need to connect your Google account first. ` +
+            `Click here to connect: ${authResponse.oauth_url}`
+          );
+          
+          // Open OAuth URL in new tab
+          window.open(authResponse.oauth_url, '_blank');
+          
+        } catch (authErr) {
+          console.error('❌ Failed to get OAuth URL:', authErr);
+          setError('Failed to get Google Calendar authorization. Please try again.');
+        }
+      } else {
+        // Generic error message
+        let errorMessage = 'Failed to export to calendar';
+        if (err.response?.data?.detail) {
+          errorMessage += ': ' + err.response.data.detail;
+        } else if (err.message) {
+          errorMessage += ': ' + err.message;
+        }
+        setError(errorMessage);
+      }
     }
   }, [result, onClose]);
 
