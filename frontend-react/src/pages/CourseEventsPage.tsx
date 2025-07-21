@@ -31,7 +31,6 @@ import {
   Category,
 } from '@mui/icons-material';
 import { courseService } from '../services/courseService';
-import { useAuth } from '../contexts/AuthContext';
 import type { EventCategory } from '../types';
 
 // Category configuration with colors and icons
@@ -106,7 +105,6 @@ const categoryConfig: Record<EventCategory, {
 const CourseEventsPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | 'All'>('All');
 
   // Query for course details
