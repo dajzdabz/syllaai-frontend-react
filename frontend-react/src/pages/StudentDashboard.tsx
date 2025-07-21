@@ -105,54 +105,7 @@ const StudentDashboard: React.FC = () => {
     },
   });
 
-  // Delete course mutation (for personal courses)
-  const deleteMutation = useMutation({
-    mutationFn: async (courseId: string) => {
-      try {
-        return await courseService.deleteCourse(courseId);
-      } catch (error: any) {
-        console.error('Delete course API error:', error);
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      console.log('Course deleted successfully');
-      refetchCourses();
-    },
-    onError: (error: any) => {
-      console.error('Failed to delete course:', error);
-      console.error('Full error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url,
-        method: error.config?.method
-      });
-      
-      let errorMessage = 'Failed to delete course. Please try again.';
-      
-      if (error.response?.status === 500) {
-        errorMessage = `Server Error (500): The backend service is experiencing issues. Please try again in a few minutes or contact support if the problem persists.`;
-      } else if (error.response?.status === 404) {
-        errorMessage = 'Course not found. It may have already been deleted.';
-      } else if (error.response?.status === 403) {
-        errorMessage = 'You do not have permission to delete this course.';
-      } else if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      // Add technical details for debugging
-      if (!isDevelopment) {
-        errorMessage += ` (Error ${error.response?.status || 'Unknown'} - API: ${apiEndpoint})`;
-      }
-      
-      setErrorAlert({ message: errorMessage, severity: 'error' });
-    },
-  });
-
-  // Unenroll from course mutation (for enrolled courses)
+  // Unenroll from course mutation
   const unenrollMutation = useMutation({
     mutationFn: async (courseId: string) => {
       console.log('=== UNENROLL DEBUG ===');
@@ -359,7 +312,7 @@ const StudentDashboard: React.FC = () => {
                             <Button
                               size="small"
                               color="error"
-                              disabled={deleteMutation.isPending || unenrollMutation.isPending}
+                              disabled={unenrollMutation.isPending}
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -370,7 +323,7 @@ const StudentDashboard: React.FC = () => {
                               }}
                               sx={{ minWidth: 'auto', p: 0.5 }}
                             >
-                              {(deleteMutation.isPending || unenrollMutation.isPending) ? '...' : '×'}
+                              {unenrollMutation.isPending ? '...' : '×'}
                             </Button>
                           </Box>
                         </CardContent>
@@ -494,7 +447,7 @@ const StudentDashboard: React.FC = () => {
             onClick={handleConfirmAction}
             color="error"
             variant="contained"
-            disabled={deleteMutation.isPending || unenrollMutation.isPending}
+            disabled={unenrollMutation.isPending}
           >
             Remove Course
           </Button>
