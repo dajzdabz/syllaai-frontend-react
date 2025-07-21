@@ -88,6 +88,12 @@ const categoryConfig: Record<EventCategory, {
     buttonColor: 'inherit' as const,
     icon: Category, 
     bgColor: '#f5f5f5' 
+  },
+  ASSESSMENT: { 
+    chipColor: 'error' as const,
+    buttonColor: 'error' as const,
+    icon: Assignment, 
+    bgColor: '#ffebee' 
   }
 };
 
@@ -333,6 +339,10 @@ const CourseEventsPage: React.FC = () => {
                 {availableCategories.map((category) => {
                   const count = Array.isArray(events) ? events.filter((e: any) => e.category === category).length : 0;
                   const config = categoryConfig[category as EventCategory];
+                  if (!config) {
+                    console.warn(`Unknown category: ${category}, skipping`);
+                    return null;
+                  }
                   const IconComponent = config.icon;
                   
                   return (
@@ -376,7 +386,7 @@ const CourseEventsPage: React.FC = () => {
             ) : (
               <Grid container spacing={3}>
                 {filteredEvents.map((event: any) => {
-                  const config = categoryConfig[event.category as EventCategory];
+                  const config = categoryConfig[event.category as EventCategory] || categoryConfig.Other;
                   const IconComponent = config.icon;
                   const dateTime = formatDateTime(event.start_ts);
 
