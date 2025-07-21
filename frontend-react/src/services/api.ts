@@ -497,7 +497,9 @@ class ApiService {
       semester: data.semester,
       events_count: data.events.length,
       sample_event: data.events[0],
-      event_categories: data.events.map(e => e.category)
+      event_categories: data.events.map(e => e.category),
+      sample_event_full: JSON.stringify(data.events[0], null, 2),
+      all_event_fields: data.events[0] ? Object.keys(data.events[0]) : []
     });
     
     const response = await this.client.post<Course>('/api/student-events/save-to-my-courses', data);

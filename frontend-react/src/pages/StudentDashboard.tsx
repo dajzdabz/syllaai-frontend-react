@@ -162,6 +162,47 @@ const StudentDashboard: React.FC = () => {
     },
   });
 
+  // Delete course mutation (for student-created courses)
+  const deleteMutation = useMutation({
+    mutationFn: async (courseId: string) => {
+      console.log('=== DELETE DEBUG ===');
+      console.log('Course ID:', courseId);
+      console.log('Course ID Type:', typeof courseId);
+      console.log('API URL will be:', `/api/courses/${courseId}`);
+      
+      try {
+        const result = await courseService.deleteCourse(courseId);
+        console.log('Delete API response:', result);
+        return result;
+      } catch (error: any) {
+        console.error('Delete course API error:', error);
+        console.error('Error response:', error.response);
+        console.error('Error status:', error.response?.status);
+        console.error('Error data:', error.response?.data);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      console.log('Deleted course successfully');
+      refetchCourses();
+    },
+    onError: (error: any) => {
+      console.error('Failed to delete course:', error);
+      
+      let errorMessage = 'Failed to delete course. Please try again.';
+      
+      if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to delete this course.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Course not found.';
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+      
+      setErrorAlert({ message: errorMessage, severity: 'error' });
+    },
+  });
+
   const handleSearch = () => {
     if (searchCrn.trim()) {
       setSearchError(null);
@@ -180,17 +221,28 @@ const StudentDashboard: React.FC = () => {
     console.log('Course created_by:', course.created_by);
     console.log('Current user ID:', user?.id);
     
-    // Always unenroll for student dashboard - remove from "My Courses" list
-    console.log('Action: UNENROLL (remove from student course list)');
-    console.log('Calling unenrollMutation with course ID:', course.id);
-    unenrollMutation.mutate(course.id);
+    // Check if the student created this course
+    const isCreator = course.created_by === user?.id;
+    
+    if (isCreator) {
+      console.log('Action: DELETE (student created this course)');
+      console.log('Calling deleteMutation with course ID:', course.id);
+      deleteMutation.mutate(course.id);
+    } else {
+      console.log('Action: UNENROLL (remove from student course list)');
+      console.log('Calling unenrollMutation with course ID:', course.id);
+      unenrollMutation.mutate(course.id);
+    }
   };
   
   const handleRemoveClick = (course: Course) => {
-    // Always default to UNENROLL for student dashboard
-    // Students typically want to remove courses from their list, not delete them entirely
-    const action = 'unenroll';
-    const description = `remove "${course.title || course.name || 'Untitled Course'}" from your course list?`;
+    // Check if the student created this course
+    const isCreator = course.created_by === user?.id;
+    
+    const action = isCreator ? 'delete' : 'unenroll';
+    const description = isCreator 
+      ? `permanently delete "${course.title || course.name || 'Untitled Course'}"? This action cannot be undone.`
+      : `remove "${course.title || course.name || 'Untitled Course'}" from your course list?`;
     
     setConfirmDialog({
       open: true,
@@ -312,7 +364,7 @@ const StudentDashboard: React.FC = () => {
                             <Button
                               size="small"
                               color="error"
-                              disabled={unenrollMutation.isPending}
+                              disabled={unenrollMutation.isPending || deleteMutation.isPending}
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -322,8 +374,9 @@ const StudentDashboard: React.FC = () => {
                                 handleRemoveClick(course);
                               }}
                               sx={{ minWidth: 'auto', p: 0.5 }}
+                              title={course.created_by === user?.id ? 'Delete course' : 'Unenroll from course'}
                             >
-                              {unenrollMutation.isPending ? '...' : '×'}
+                              {(unenrollMutation.isPending || deleteMutation.isPending) ? '...' : '×'}
                             </Button>
                           </Box>
                         </CardContent>
