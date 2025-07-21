@@ -31,6 +31,7 @@ import {
 } from '@mui/icons-material';
 import { fileService } from '../services/fileService';
 import { courseService } from '../services/courseService';
+import { apiService } from '../services/api';
 import type { 
   SyllabusUploadResponse, 
   ProcessingStage, 
@@ -117,6 +118,11 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [editableCourseTitle, setEditableCourseTitle] = useState('');
   const [editableSemester, setEditableSemester] = useState('');
+  
+  // Duplicate detection state
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [duplicateCheckResult, setDuplicateCheckResult] = useState<any>(null);
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
 
   // File selection handler
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -312,9 +318,9 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
     setShowConfirmation(true);
   }, [result]);
 
-  // Actually save the course after confirmation
+  // Check for duplicates before saving
   const handleConfirmSave = useCallback(async () => {
-    console.log('🔥 handleConfirmSave called');
+    console.log('🔥 handleConfirmSave called - checking for duplicates first');
     
     if (!result?.extracted_events) {
       console.log('❌ No extracted events, returning');
@@ -322,7 +328,59 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
     }
 
     try {
-      // Use the user-edited values from the confirmation dialog
+      setIsCheckingDuplicates(true);
+      
+      // Check for potential duplicates
+      const duplicateCheck = await apiService.checkCourseDuplicates(
+        {
+          title: editableCourseTitle,
+          semester: editableSemester
+        },
+        result.extracted_events
+      );
+      
+      console.log('🔍 Duplicate check result:', duplicateCheck);
+      
+      // If duplicates found, show duplicate dialog
+      if (duplicateCheck.has_potential_duplicates) {
+        setDuplicateCheckResult(duplicateCheck);
+        setShowConfirmation(false);
+        setShowDuplicateDialog(true);
+        setIsCheckingDuplicates(false);
+        return;
+      }
+      
+      // No duplicates found, proceed with saving
+      setIsCheckingDuplicates(false);
+      await performCourseSave();
+      
+    } catch (err: unknown) {
+      console.error('❌ Failed to check duplicates:', err);
+      setIsCheckingDuplicates(false);
+      
+      // If duplicate check fails, ask user if they want to proceed anyway
+      const proceedAnyway = window.confirm(
+        'Unable to check for duplicate courses. Would you like to save anyway?'
+      );
+      
+      if (proceedAnyway) {
+        await performCourseSave();
+      } else {
+        setError('Duplicate check failed. Please try again.');
+      }
+    }
+  }, [result, editableCourseTitle, editableSemester]);
+
+  // Actually save the course (extracted from handleConfirmSave)
+  const performCourseSave = useCallback(async () => {
+    console.log('🔄 performCourseSave called');
+    
+    if (!result?.extracted_events) {
+      console.log('❌ No extracted events, returning');
+      return;
+    }
+
+    try {
       console.log('🔄 About to call courseService.saveToMyCourses with:', {
         course_title: editableCourseTitle,
         semester: editableSemester,
@@ -342,6 +400,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       setSuccessMessage(`Successfully saved "${editableCourseTitle}" to My Courses!`);
       setCurrentStage('complete');
       setShowConfirmation(false);
+      setShowDuplicateDialog(false);
       
       // Close dialog and reset after a brief delay to show success
       setTimeout(() => {
@@ -353,17 +412,60 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       
     } catch (err: unknown) {
       console.error('❌ Failed to save course:', err);
-      console.error('❌ Error type:', typeof err);
-      console.error('❌ Error details:', err);
       let errorMessage = 'Failed to save course';
       if (err && typeof err === 'object' && 'message' in err) {
         errorMessage = String((err as any).message);
       }
-      console.error('❌ Setting error message:', errorMessage);
       setError(errorMessage);
       setShowConfirmation(false);
+      setShowDuplicateDialog(false);
     }
   }, [result, onClose, resetFileInput, editableCourseTitle, editableSemester]);
+
+  // Handle updating an existing course
+  const handleUpdateExistingCourse = useCallback(async (courseId: string) => {
+    console.log('🔄 handleUpdateExistingCourse called for:', courseId);
+    
+    if (!result?.extracted_events) {
+      console.log('❌ No extracted events, returning');
+      return;
+    }
+
+    try {
+      const updateResult = await apiService.mergeCourseUpdates(courseId, {
+        new_events: result.extracted_events,
+        course_updates: {
+          title: editableCourseTitle,
+          semester: editableSemester
+        }
+      });
+      
+      console.log('✅ Course updated successfully:', updateResult);
+      
+      // Show success message
+      setError(null);
+      setSuccessMessage(`Successfully updated "${editableCourseTitle}" with ${updateResult.events_updated} events!`);
+      setCurrentStage('complete');
+      setShowDuplicateDialog(false);
+      
+      // Close dialog and reset after a brief delay
+      setTimeout(() => {
+        resetFileInput();
+        setShowResults(false);
+        setSuccessMessage(null);
+        onClose?.();
+      }, 2000);
+      
+    } catch (err: unknown) {
+      console.error('❌ Failed to update course:', err);
+      let errorMessage = 'Failed to update course';
+      if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = String((err as any).message);
+      }
+      setError(errorMessage);
+      setShowDuplicateDialog(false);
+    }
+  }, [result, editableCourseTitle, editableSemester, onClose, resetFileInput]);
 
   // Render processing stage indicator
   const renderStageIndicator = (stage: ProcessingStageInfo, index: number) => {
@@ -710,8 +812,109 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
           <Button onClick={() => setShowConfirmation(false)}>
             Cancel
           </Button>
-          <Button onClick={handleConfirmSave} variant="contained" color="primary">
-            Save to My Courses
+          <Button 
+            onClick={handleConfirmSave} 
+            variant="contained" 
+            color="primary"
+            disabled={isCheckingDuplicates}
+          >
+            {isCheckingDuplicates ? 'Checking for duplicates...' : 'Save to My Courses'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Duplicate Detection Dialog */}
+      <Dialog
+        open={showDuplicateDialog}
+        onClose={() => setShowDuplicateDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Potential Duplicate Course Detected
+        </DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            We found {duplicateCheckResult?.total_candidates || 0} similar course(s) in your account. 
+            Please review and choose how to proceed.
+          </Alert>
+          
+          {duplicateCheckResult?.duplicate_candidates?.map((duplicate: any, index: number) => (
+            <Card key={duplicate.course_id} sx={{ mb: 2 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  {duplicate.course_title}
+                </Typography>
+                
+                <Grid container spacing={2} sx={{ mb: 1 }}>
+                  <Grid item xs={6}>
+                    <Typography variant="body2">
+                      <strong>Semester:</strong> {duplicate.course_semester || 'Not specified'}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body2">
+                      <strong>Similarity:</strong> {Math.round(duplicate.similarity_score * 100)}%
+                    </Typography>
+                  </Grid>
+                </Grid>
+                
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  {duplicate.summary}
+                </Typography>
+                
+                <Box sx={{ mb: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                    Match reasons:
+                  </Typography>
+                  {duplicate.match_reasons?.map((reason: string, reasonIndex: number) => (
+                    <Chip key={reasonIndex} label={reason} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+                  ))}
+                </Box>
+                
+                {duplicate.events_added?.length > 0 && (
+                  <Typography variant="body2" color="success.main">
+                    + {duplicate.events_added.length} new events
+                  </Typography>
+                )}
+                
+                {duplicate.events_removed?.length > 0 && (
+                  <Typography variant="body2" color="error.main">
+                    - {duplicate.events_removed.length} events would be removed
+                  </Typography>
+                )}
+                
+                <Box sx={{ mt: 2 }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleUpdateExistingCourse(duplicate.course_id)}
+                    sx={{ mr: 1 }}
+                  >
+                    Update This Course
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setShowDuplicateDialog(false);
+                      setShowConfirmation(true);
+                    }}
+                  >
+                    Create New Course Instead
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          ))}
+          
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            <strong>Update This Course:</strong> Replaces existing events with new ones from the syllabus<br />
+            <strong>Create New Course:</strong> Creates a separate course with the same name
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDuplicateDialog(false)}>
+            Cancel
           </Button>
         </DialogActions>
       </Dialog>

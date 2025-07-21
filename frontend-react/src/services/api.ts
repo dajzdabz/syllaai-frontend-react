@@ -506,6 +506,77 @@ class ApiService {
     return response.data;
   }
 
+  // Course update and duplicate detection endpoints
+  async checkCourseDuplicates(courseData: {
+    title: string;
+    semester?: string;
+  }, events: CourseEventCreate[]): Promise<{
+    has_potential_duplicates: boolean;
+    total_candidates: number;
+    duplicate_candidates: Array<{
+      course_id: string;
+      course_title: string;
+      course_semester: string;
+      similarity_score: number;
+      match_reasons: string[];
+      is_duplicate: boolean;
+      title_match: number;
+      semester_match: boolean;
+      events_added: any[];
+      events_removed: any[];
+      events_modified: any[];
+      summary: string;
+    }>;
+    recommendation: 'duplicate_detected' | 'similar_courses_found' | 'no_duplicates_found';
+  }> {
+    console.log('🔍 Checking for course duplicates:', {
+      course_title: courseData.title,
+      semester: courseData.semester,
+      events_count: events.length
+    });
+    
+    const response = await this.client.post('/api/courses/check-duplicates', {
+      ...courseData,
+      events
+    });
+    
+    return response.data;
+  }
+
+  async updateCourse(courseId: string, updates: {
+    title?: string;
+    crn?: string;
+    semester?: string;
+  }): Promise<Course> {
+    console.log('🔄 Updating course:', courseId, updates);
+    
+    const response = await this.client.put<Course>(`/api/courses/${courseId}`, updates);
+    return response.data;
+  }
+
+  async mergeCourseUpdates(courseId: string, data: {
+    new_events: CourseEventCreate[];
+    course_updates?: {
+      title?: string;
+      crn?: string;
+      semester?: string;
+    };
+  }): Promise<{
+    message: string;
+    course_id: string;
+    course_title: string;
+    events_updated: number;
+    updated_at: string;
+  }> {
+    console.log('🔄 Merging course updates:', courseId, {
+      events_count: data.new_events.length,
+      has_course_updates: !!data.course_updates
+    });
+    
+    const response = await this.client.post(`/api/courses/${courseId}/merge-updates`, data);
+    return response.data;
+  }
+
   // Health check
   async healthCheck(): Promise<{ status: string }> {
     const response = await this.client.get<{ status: string }>('/health');
