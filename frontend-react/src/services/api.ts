@@ -491,16 +491,16 @@ class ApiService {
     semester?: string;
     events: CourseEventCreate[];
   }): Promise<Course> {
-    // Normalize event categories to uppercase to match backend expectations
-    const formattedData = {
-      ...data,
-      events: data.events.map(event => ({
-        ...event,
-        category: event.category.toUpperCase() as EventCategory
-      }))
-    };
+    // Log the data being sent for debugging
+    console.log('🔍 saveToMyCourses data before sending:', {
+      course_title: data.course_title,
+      semester: data.semester,
+      events_count: data.events.length,
+      sample_event: data.events[0],
+      event_categories: data.events.map(e => e.category)
+    });
     
-    const response = await this.client.post<Course>('/api/student-events/save-to-my-courses', formattedData);
+    const response = await this.client.post<Course>('/api/student-events/save-to-my-courses', data);
     return response.data;
   }
 
