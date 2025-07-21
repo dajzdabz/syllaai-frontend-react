@@ -536,8 +536,8 @@ class ApiService {
     });
     
     const response = await this.client.post('/api/courses/check-duplicates', {
-      ...courseData,
-      events
+      course_data: courseData,
+      events: events
     });
     
     return response.data;
