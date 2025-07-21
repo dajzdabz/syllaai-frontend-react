@@ -839,7 +839,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
             Please review and choose how to proceed.
           </Alert>
           
-          {duplicateCheckResult?.duplicate_candidates?.map((duplicate: any, index: number) => (
+          {duplicateCheckResult?.duplicate_candidates?.map((duplicate: any) => (
             <Card key={duplicate.course_id} sx={{ mb: 2 }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
