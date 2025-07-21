@@ -153,22 +153,7 @@ const CourseEventsPage: React.FC = () => {
     gcTime: 60000, // Cache for 1 minute after component unmount
   });
 
-  // Delete course mutation (for personal courses)
-  const deleteMutation = useMutation({
-    mutationFn: async () => {
-      if (!courseId) throw new Error('No course ID');
-      return await courseService.deleteCourse(courseId);
-    },
-    onSuccess: () => {
-      navigate('/dashboard');
-    },
-    onError: (error: any) => {
-      console.error('Failed to delete course:', error);
-      alert('Failed to delete course. Please try again.');
-    },
-  });
-
-  // Unenroll from course mutation (for enrolled courses)
+  // Remove course mutation (unenroll from course)
   const unenrollMutation = useMutation({
     mutationFn: async () => {
       if (!courseId) throw new Error('No course ID');
@@ -186,16 +171,9 @@ const CourseEventsPage: React.FC = () => {
   const handleRemoveCourse = () => {
     if (!course) return;
     
-    // Check if this is a personal course (student created it)
-    const isPersonalCourse = course.created_by === user?.id;
-    
-    if (isPersonalCourse) {
-      // Delete the course entirely
-      deleteMutation.mutate();
-    } else {
-      // Unenroll from the course
-      unenrollMutation.mutate();
-    }
+    // Always use unenroll like the dashboard does - this ensures consistency
+    // Students should remove courses from their list, not delete them entirely
+    unenrollMutation.mutate();
   };
 
   // Filter events by category
@@ -265,22 +243,15 @@ const CourseEventsPage: React.FC = () => {
             <Button
               color="error"
               variant="outlined"
-              disabled={deleteMutation.isPending || unenrollMutation.isPending}
+              disabled={unenrollMutation.isPending}
               onClick={() => {
                 if (!course) return;
-                const isPersonalCourse = course.created_by === user?.id;
-                const actionText = isPersonalCourse 
-                  ? 'delete this course and all its events' 
-                  : 'remove this course from your list';
-                if (window.confirm(`Are you sure you want to ${actionText}?`)) {
+                if (window.confirm(`Are you sure you want to remove "${course.name || course.title}" from your course list?`)) {
                   handleRemoveCourse();
                 }
               }}
             >
-              {(deleteMutation.isPending || unenrollMutation.isPending) 
-                ? 'Removing...' 
-                : (course?.created_by === user?.id ? 'Delete Course' : 'Remove Course')
-              }
+              {unenrollMutation.isPending ? 'Removing...' : 'Remove Course'}
             </Button>
           )}
         </Toolbar>
