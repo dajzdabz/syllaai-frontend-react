@@ -108,6 +108,8 @@ export interface SyllabusUploadResponse {
     instructor_name?: string;
     semester?: string;
     university?: string;
+    course_code?: string;
+    meeting_time?: string;
   };
   course_id: string;
   message: string;
