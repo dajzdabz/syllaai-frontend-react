@@ -352,7 +352,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       
       // No duplicates found, proceed with saving
       setIsCheckingDuplicates(false);
-      await performCourseSave();
+      await performCourseSave('no_duplicates');
       
     } catch (err: unknown) {
       console.error('❌ Failed to check duplicates:', err);
@@ -364,7 +364,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       );
       
       if (proceedAnyway) {
-        await performCourseSave();
+        await performCourseSave('skip_duplicates');
       } else {
         setError('Duplicate check failed. Please try again.');
       }
@@ -372,8 +372,8 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
   }, [result, editableCourseTitle, editableSemester]);
 
   // Actually save the course (extracted from handleConfirmSave)
-  const performCourseSave = useCallback(async () => {
-    console.log('🔄 performCourseSave called');
+  const performCourseSave = useCallback(async (context: 'no_duplicates' | 'skip_duplicates' | 'default' = 'default') => {
+    console.log('🔄 performCourseSave called with context:', context);
     
     if (!result?.extracted_events) {
       console.log('❌ No extracted events, returning');
@@ -395,9 +395,17 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       
       console.log('✅ Course saved successfully:', savedCourse);
       
-      // Show success message
+      // Show contextual success message
       setError(null);
-      setSuccessMessage(`Successfully saved "${editableCourseTitle}" to My Courses!`);
+      let message = `Successfully saved "${editableCourseTitle}" to My Courses!`;
+      
+      if (context === 'no_duplicates') {
+        message = `✅ No duplicates found! Successfully saved "${editableCourseTitle}" to My Courses.`;
+      } else if (context === 'skip_duplicates') {
+        message = `Successfully saved "${editableCourseTitle}" to My Courses (duplicate check was skipped).`;
+      }
+      
+      setSuccessMessage(message);
       setCurrentStage('complete');
       setShowConfirmation(false);
       setShowDuplicateDialog(false);
