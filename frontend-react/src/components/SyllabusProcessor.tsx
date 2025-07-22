@@ -384,7 +384,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
   }, [result, editableCourseTitle, editableSemester, bypassDuplicateCheck]);
 
   // Actually save the course (extracted from handleConfirmSave)
-  const performCourseSave = useCallback(async (context: 'no_duplicates' | 'skip_duplicates' | 'default' = 'default') => {
+  const performCourseSave = useCallback(async (context: 'no_duplicates' | 'skip_duplicates' | 'bypass_duplicates' | 'default' = 'default') => {
     console.log('🔄 performCourseSave called with context:', context);
     
     if (!result?.extracted_events) {
