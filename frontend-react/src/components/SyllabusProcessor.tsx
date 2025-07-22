@@ -118,6 +118,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [editableCourseTitle, setEditableCourseTitle] = useState('');
   const [editableSemester, setEditableSemester] = useState('');
+  const [bypassDuplicateCheck, setBypassDuplicateCheck] = useState(false);
   
   // Duplicate detection state
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
@@ -320,13 +321,24 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
 
   // Check for duplicates before saving
   const handleConfirmSave = useCallback(async () => {
-    console.log('🔥 handleConfirmSave called - checking for duplicates first');
+    console.log('🔥 handleConfirmSave called');
+    console.log('🔍 Bypass duplicate check:', bypassDuplicateCheck);
     
     if (!result?.extracted_events) {
       console.log('❌ No extracted events, returning');
       return;
     }
 
+    // If bypass flag is set, skip duplicate checking entirely
+    if (bypassDuplicateCheck) {
+      console.log('⏭️ Bypassing duplicate check - proceeding directly to save');
+      setBypassDuplicateCheck(false); // Reset flag
+      await performCourseSave('bypass_duplicates');
+      return;
+    }
+
+    console.log('🔍 Running duplicate check');
+    
     try {
       setIsCheckingDuplicates(true);
       
@@ -369,7 +381,7 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
         setError('Duplicate check failed. Please try again.');
       }
     }
-  }, [result, editableCourseTitle, editableSemester]);
+  }, [result, editableCourseTitle, editableSemester, bypassDuplicateCheck]);
 
   // Actually save the course (extracted from handleConfirmSave)
   const performCourseSave = useCallback(async (context: 'no_duplicates' | 'skip_duplicates' | 'default' = 'default') => {
@@ -403,6 +415,8 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
         message = `✅ No duplicates found! Successfully saved "${editableCourseTitle}" to My Courses.`;
       } else if (context === 'skip_duplicates') {
         message = `Successfully saved "${editableCourseTitle}" to My Courses (duplicate check was skipped).`;
+      } else if (context === 'bypass_duplicates') {
+        message = `✅ Created new course "${editableCourseTitle}" successfully! (Duplicate check bypassed as requested)`;
       }
       
       setSuccessMessage(message);
@@ -904,6 +918,8 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
                   <Button
                     variant="outlined"
                     onClick={() => {
+                      console.log('🔄 "Create New Course Instead" clicked - setting bypass flag');
+                      setBypassDuplicateCheck(true);
                       setShowDuplicateDialog(false);
                       setShowConfirmation(true);
                     }}
