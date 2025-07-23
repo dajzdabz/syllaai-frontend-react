@@ -86,8 +86,9 @@ An AI-powered platform that:
 - ✅ **Responsive Web Application** (React frontend)
 
 ### Phase 2: Enhanced Features (Q2 2025)
-- **Mobile Application** (React Native or PWA)
+- **Course Duplicate Detection & Updates** (smart change detection and merge workflow)
 - **Advanced Calendar Views** (month, week, agenda formats)
+- **Mobile Application** (React Native or PWA)
 - **Notification System** (email, push notifications)
 - **Bulk Operations** (multi-file upload, batch processing)
 - **Enhanced Security** (data encryption, audit logging)

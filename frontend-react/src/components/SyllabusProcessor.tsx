@@ -332,8 +332,9 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
     // If bypass flag is set, skip duplicate checking entirely
     if (bypassDuplicateCheck) {
       console.log('⏭️ Bypassing duplicate check - proceeding directly to save');
-      setBypassDuplicateCheck(false); // Reset flag
+      // Don't reset flag here - let performCourseSave handle it
       await performCourseSave('bypass_duplicates');
+      setBypassDuplicateCheck(false); // Reset flag AFTER save completes
       return;
     }
 
@@ -835,7 +836,11 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
             Cancel
           </Button>
           <Button 
-            onClick={handleConfirmSave} 
+            onClick={() => {
+              console.log('🔥 Save to My Courses button clicked in confirmation dialog');
+              console.log('🔍 Current bypass flag state:', bypassDuplicateCheck);
+              handleConfirmSave();
+            }} 
             variant="contained" 
             color="primary"
             disabled={isCheckingDuplicates}
@@ -919,9 +924,25 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
                     variant="outlined"
                     onClick={() => {
                       console.log('🔄 "Create New Course Instead" clicked - setting bypass flag');
+                      console.log('🔍 Current states before action:', {
+                        bypassDuplicateCheck,
+                        showDuplicateDialog,
+                        showConfirmation,
+                        result: !!result,
+                        editableCourseTitle,
+                        editableSemester
+                      });
                       setBypassDuplicateCheck(true);
                       setShowDuplicateDialog(false);
+                      // Ensure course data is still populated
+                      if (!editableCourseTitle || !editableSemester) {
+                        const extractedTitle = result?.course_metadata?.course_title || '';
+                        const extractedSemester = result?.course_metadata?.semester || '';
+                        setEditableCourseTitle(extractedTitle || `My Course - ${new Date().toLocaleDateString()}`);
+                        setEditableSemester(extractedSemester || '2025SP');
+                      }
                       setShowConfirmation(true);
+                      console.log('🔍 States set - bypass flag should be true now');
                     }}
                   >
                     Create New Course Instead
