@@ -490,12 +490,14 @@ class ApiService {
     course_title: string;
     semester?: string;
     events: CourseEventCreate[];
+    bypass_duplicates?: boolean;
   }): Promise<Course> {
     // Log the data being sent for debugging
     console.log('🔍 saveToMyCourses data before sending:', {
       course_title: data.course_title,
       semester: data.semester,
       events_count: data.events.length,
+      bypass_duplicates: data.bypass_duplicates,
       sample_event: data.events[0],
       event_categories: data.events.map(e => e.category),
       sample_event_full: JSON.stringify(data.events[0], null, 2),

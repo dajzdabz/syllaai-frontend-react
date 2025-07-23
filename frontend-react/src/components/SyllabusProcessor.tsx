@@ -403,7 +403,8 @@ export const SyllabusProcessor: React.FC<SyllabusProcessorProps> = ({
       const savedCourse = await courseService.saveToMyCourses({
         course_title: editableCourseTitle,
         semester: editableSemester,
-        events: result.extracted_events
+        events: result.extracted_events,
+        bypass_duplicates: context === 'bypass_duplicates'
       });
       
       console.log('✅ Course saved successfully:', savedCourse);

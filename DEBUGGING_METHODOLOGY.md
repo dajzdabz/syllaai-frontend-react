@@ -71,9 +71,30 @@ This document outlines the proven debugging strategy developed for SyllabAI that
 
 ## **JavaScript Console Debugging Toolkit**
 
+### **IMPORTANT: Interactive Console Debugging Process**
+
+**This is the actual debugging methodology we use:**
+
+1. **Developer provides JavaScript scripts one by one** to run in the console
+2. **User runs each script** and provides the output
+3. **Developer analyzes output** and provides the next script
+4. **This continues back and forth** until all issues are identified
+5. **Developer keeps a running tally** of all issues found
+6. **Only after all issues are identified** do we implement fixes
+
+**The Process Flow:**
+```
+Developer: "Run this script in console: [script 1]"
+User: "Here's the output: [output 1]"
+Developer: "Now do [action] and run this script: [script 2]"
+User: "Here's the output: [output 2]"
+... (continue until all issues found) ...
+Developer: "Issues found: [complete list]. Now let's fix them."
+```
+
 ### **Standard Testing Scripts**
 
-#### **Component Detection**
+#### **Script 1: Component Detection**
 ```javascript
 console.log('=== COMPONENT DETECTION TEST ===');
 const component = document.querySelector('input[type="file"]') || document.querySelector('.main-component');
@@ -81,7 +102,7 @@ console.log('Component found:', !!component);
 console.log('Dialogs available:', document.querySelectorAll('.MuiDialog-root').length);
 ```
 
-#### **API Monitoring Setup**
+#### **Script 2: API Monitoring Setup**
 ```javascript
 console.log('=== API MONITORING SETUP ===');
 const originalFetch = window.fetch;
@@ -95,14 +116,14 @@ window.fetch = function(...args) {
 };
 ```
 
-#### **Data Extraction**
+#### **Script 3: Data Extraction**
 ```javascript
 console.log('=== DATA EXTRACTION ===');
 // Look for React state, localStorage, API responses
 // Extract actual values, not just true/false
 ```
 
-#### **Flow Verification**
+#### **Script 4: Flow Verification**
 ```javascript
 console.log('=== FLOW VERIFICATION ===');
 // Test each step of user interaction
