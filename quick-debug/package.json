@@ -1,0 +1,12 @@
+{
+  "name": "syllabai-quick-debug",
+  "version": "1.0.0",
+  "scripts": {
+    "setup": "npm install && npx playwright install chromium",
+    "test": "node quickTest.js",
+    "debug": "PWDEBUG=1 node quickTest.js"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}

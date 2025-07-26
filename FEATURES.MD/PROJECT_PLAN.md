@@ -11,16 +11,17 @@
 4. [Technical Requirements](#technical-requirements)
 5. [Limits and Exclusions](#limits-and-exclusions)
 6. [Feature Breakdown Structure](#feature-breakdown-structure)
-7. [User Stories & Use Cases](#user-stories--use-cases)
-8. [API Specifications](#api-specifications)
-9. [Database Schema](#database-schema)
-10. [UI/UX Requirements](#uiux-requirements)
-11. [Roles and Responsibilities](#roles-and-responsibilities)
-12. [Development Workflow](#development-workflow)
-13. [Quality Assurance Process](#quality-assurance-process)
-14. [Technical Risks](#technical-risks)
-15. [High-Level Milestones](#high-level-milestones)
-16. [Dependencies](#dependencies)
+7. [Individual Feature Specifications](#individual-feature-specifications)
+8. [User Stories & Use Cases](#user-stories--use-cases)
+9. [API Specifications](#api-specifications)
+10. [Database Schema](#database-schema)
+11. [UI/UX Requirements](#uiux-requirements)
+12. [Roles and Responsibilities](#roles-and-responsibilities)
+13. [Development Workflow](#development-workflow)
+14. [Quality Assurance Process](#quality-assurance-process)
+15. [Technical Risks](#technical-risks)
+16. [High-Level Milestones](#high-level-milestones)
+17. [Dependencies](#dependencies)
 
 ---
 
@@ -419,7 +420,40 @@ An AI-powered platform that:
 
 ---
 
-## 7. User Stories & Use Cases
+## 7. Individual Feature Specifications
+
+For detailed technical specifications, UI components, and implementation details, refer to the individual feature specification files:
+
+### Core Platform Features
+
+- **[USER_AUTHENTICATION.md](./USER_AUTHENTICATION.md)** - Complete user authentication system with Google OAuth, JWT management, and role-based access control
+
+- **[SYLLABUS_PROCESSING.md](./SYLLABUS_PROCESSING.md)** - AI-powered syllabus processing engine with GPT-4 integration, document parsing, and confidence scoring
+
+- **[COURSE_MANAGEMENT.md](./COURSE_MANAGEMENT.md)** - Comprehensive course CRUD operations, duplicate detection, professor dashboard, and course discovery
+
+- **[CALENDAR_INTEGRATION.md](./CALENDAR_INTEGRATION.md)** - Google Calendar synchronization, multiple calendar views, conflict detection, and event management
+
+- **[STUDENT_ENROLLMENT.md](./STUDENT_ENROLLMENT.md)** - Student enrollment system with course discovery, waitlist management, and roster administration
+
+- **[NOTIFICATIONS.md](./NOTIFICATIONS.md)** - Multi-channel notification system with smart scheduling, preferences management, and email templates
+
+- **[ANALYTICS_DASHBOARD.md](./ANALYTICS_DASHBOARD.md)** - Advanced analytics platform with performance tracking, at-risk student identification, and institutional insights
+
+### Specialized Features
+
+- **[GRADE_PROJECTION.md](./GRADE_PROJECTION.md)** - Grade projection and early intervention system for student success and university monetization
+
+Each specification file contains:
+- Detailed technical architecture and data models
+- Complete API endpoint documentation
+- UI/UX component specifications
+- Implementation phases and success metrics
+- Integration points with other features
+
+---
+
+## 8. User Stories & Use Cases
 
 ### 7.1 Professor User Stories
 

@@ -1,0 +1,62 @@
+# Simplified test scenarios with cleaner DSL
+scenarios:
+  - name: "Basic Component Test"
+    steps:
+      - action: "navigate"
+        path: "/student"
+      
+      - action: "expectVisible"
+        selector: 'input[type="file"]'
+        testId: "file-upload-input"
+      
+      - action: "expectNoConsoleErrors"
+        severity: "error"
+
+  - name: "Upload and Save Flow"
+    steps:
+      - action: "navigate"
+        path: "/student"
+      
+      - action: "uploadFile"
+        selector: 'input[type="file"]'
+        filePath: "../backend/test_syllabi/test_syllabus_1_psyc.txt"
+      
+      - action: "waitForResponse"
+        urlIncludes: "/process"
+        status: 200
+        timeout: 10000
+      
+      - action: "expectVisible"
+        selector: '[role="dialog"]'
+        timeout: 5000
+      
+      - action: "clickByRole"
+        role: "button"
+        name: "Save"
+      
+      - action: "waitForResponse"
+        urlIncludes: "/courses"
+        status: 200
+      
+      - action: "expectApiCalls"
+        urlIncludes: "/events"
+        maxCount: 1  # No retry loops
+
+  - name: "Error Handling Test"
+    steps:
+      - action: "navigate"
+        path: "/student"
+      
+      - action: "mockAPIError"
+        urlIncludes: "/events"
+        status: 500
+      
+      - action: "wait"
+        ms: 2000
+      
+      - action: "expectNoInfiniteRetries"
+        urlIncludes: "/events"
+        maxRetries: 3
+      
+      - action: "expectVisible"
+        testId: "empty-state"  # Should show graceful degradation

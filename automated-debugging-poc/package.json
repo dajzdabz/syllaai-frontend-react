@@ -1,0 +1,20 @@
+{
+  "name": "syllaai-automated-debugger",
+  "version": "1.0.0",
+  "description": "Automated debugging system for SyllabAI",
+  "main": "index.js",
+  "scripts": {
+    "test": "node runAutomatedDebug.js",
+    "test:headed": "HEADLESS=false node runAutomatedDebug.js",
+    "test:scenario": "node runAutomatedDebug.js --scenario",
+    "install": "playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0",
+    "js-yaml": "^4.1.0",
+    "chalk": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}

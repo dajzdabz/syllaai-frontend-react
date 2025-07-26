@@ -1,0 +1,188 @@
+# SyllabAI Automated Test Scenarios
+# Based on the debugging methodology document
+
+scenarios:
+  - name: "Component Detection Test"
+    description: "Verify all UI components are properly loaded"
+    steps:
+      - action: "navigate"
+        url: "/"
+        waitFor: "networkidle"
+      
+      - action: "detectComponents"
+        validate:
+          fileInput: false  # Should not be on home page
+          buttons:
+            minCount: 1
+      
+      - action: "navigate"
+        url: "/student"
+        waitFor: "networkidle"
+      
+      - action: "detectComponents"
+        validate:
+          syllabusProcessor: true
+          buttons:
+            minCount: 2
+
+  - name: "Save to My Courses Flow"
+    description: "Test the complete syllabus upload and save flow"
+    steps:
+      - action: "navigate"
+        url: "/student"
+        waitFor: "networkidle"
+      
+      - action: "setupMonitoring"
+        clearPrevious: true
+      
+      - action: "detectComponents"
+        validate:
+          fileInput: true
+          uploadButton: true
+      
+      - action: "uploadFile"
+        file: "../backend/test_syllabi/test_syllabus_1_psyc.txt"
+        waitForDialog: true
+        timeout: 15000
+      
+      - action: "waitForAPICall"
+        urlPattern: "/process"
+        timeout: 10000
+        validateResponse:
+          status: 200
+      
+      - action: "extractDialogData"
+        selector: '[role="dialog"]'
+        expectedFields:
+          - "courseTitle"
+          - "instructor"
+          - "courseCode"
+      
+      - action: "screenshot"
+        name: "syllabus-processed"
+      
+      - action: "clickButton"
+        text: "Save"
+        waitForAPICall: "/courses"
+      
+      - action: "verifyCourseSaved"
+        checkFor:
+          - courseVisible: true
+          - noRefreshNeeded: true
+          - correctData: true
+
+  - name: "Unenroll Button Test"
+    description: "Test student unenrollment functionality"
+    steps:
+      - action: "navigate"
+        url: "/student"
+        waitFor: "networkidle"
+      
+      - action: "setupMonitoring"
+      
+      - action: "findEnrolledCourse"
+        selector: '[class*="course-card"]'
+        requireEnrolled: true
+      
+      - action: "clickButton"
+        text: "Unenroll"
+        parentSelector: '[class*="course-card"]:first-child'
+      
+      - action: "waitForAPICall"
+        urlPattern: "/unenroll"
+        validateResponse:
+          status: 200
+      
+      - action: "verifyCourseRemoved"
+        immediate: true  # Should not require refresh
+
+  - name: "API Monitoring Test"
+    description: "Verify no infinite retry loops"
+    steps:
+      - action: "navigate"
+        url: "/student"
+        waitFor: "networkidle"
+      
+      - action: "setupMonitoring"
+        trackRetries: true
+      
+      - action: "wait"
+        duration: 5000
+      
+      - action: "checkAPICallCount"
+        endpoint: "/events"
+        maxCalls: 1  # Should not retry infinitely
+      
+      - action: "checkConsoleErrors"
+        maxErrors: 0  # After July 18 fixes
+
+  - name: "Data Integrity Test"
+    description: "Verify data mapping between backend and frontend"
+    steps:
+      - action: "navigate"
+        url: "/student"
+      
+      - action: "uploadFile"
+        file: "../backend/test_syllabi/test_syllabus_4_cs.txt"
+        waitForDialog: true
+      
+      - action: "extractAPIResponse"
+        urlPattern: "/process"
+        capture:
+          - "name"  # Backend sends 'name'
+          - "course_code"
+          - "instructor"
+      
+      - action: "extractDialogData"
+        selector: '[role="dialog"]'
+        verifyMapping:
+          "name": "courseTitle"  # Frontend expects courseTitle
+      
+      - action: "checkDataIntegrity"
+        validateAllFieldsPresent: true
+
+  - name: "Error State Handling"
+    description: "Test graceful error handling"
+    steps:
+      - action: "navigate"
+        url: "/student"
+      
+      - action: "simulateNetworkError"
+        endpoint: "/events"
+        errorType: "timeout"
+      
+      - action: "checkErrorHandling"
+        expectations:
+          - noInfiniteLoop: true
+          - userFriendlyMessage: true
+          - gracefulDegradation: true
+
+  - name: "Full User Flow Test"
+    description: "Complete end-to-end flow as per methodology"
+    steps:
+      - action: "clearState"
+        localStorage: true
+        sessionStorage: true
+      
+      - action: "navigate"
+        url: "/"
+      
+      - action: "loginFlow"
+        method: "google"
+        testAccount: true
+      
+      - action: "navigateToDashboard"
+        expectedUrl: "/student"
+      
+      - action: "uploadSyllabus"
+        file: "../backend/test_syllabi/test_syllabus_2_math.txt"
+      
+      - action: "saveCourse"
+      
+      - action: "viewCourseEvents"
+      
+      - action: "exportToCalendar"
+        method: "google"
+      
+      - action: "verifyCompleteFlow"
+        allFeaturesWork: true
