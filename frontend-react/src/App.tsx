@@ -13,6 +13,7 @@ import LoginPage from './pages/LoginPage';
 import ProfessorDashboard from './pages/ProfessorDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import CourseEventsPage from './pages/CourseEventsPage';
+import AsyncProcessingTestPage from './pages/AsyncProcessingTestPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +51,12 @@ function AppRoutes() {
         path="/course/:courseId"
         element={
           user && !user.is_professor ? <CourseEventsPage /> : <Navigate to="/dashboard" />
+        }
+      />
+      <Route
+        path="/async-processing"
+        element={
+          user ? <AsyncProcessingTestPage /> : <Navigate to="/login" />
         }
       />
     </Routes>

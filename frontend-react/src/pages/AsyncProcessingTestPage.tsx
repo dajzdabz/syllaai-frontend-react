@@ -1,6 +1,5 @@
 import React from 'react';
 import { Container, Typography, Box, Alert, Link } from '@mui/material';
-import { ExperimentalBanner } from '../components/ExperimentalBanner';
 import AsyncSyllabusProcessor from '../components/AsyncSyllabusProcessor';
 
 const ExperimentalBanner: React.FC = () => (
