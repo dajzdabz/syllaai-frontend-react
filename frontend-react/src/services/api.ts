@@ -19,6 +19,7 @@ import type {
  */
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://syllaai-ai.onrender.com';
+export const ASYNC_API_BASE_URL = import.meta.env.VITE_ASYNC_API_URL || 'https://syllaai-web.onrender.com';
 
 console.log('🌐 API Base URL:', API_BASE_URL);
 console.log('🌐 Environment:', import.meta.env.MODE);
@@ -469,6 +470,105 @@ class ApiService {
         },
       }
     );
+    return response.data;
+  }
+
+  // Async Processing Endpoints (New Celery-based system)
+  private asyncClient = axios.create({
+    baseURL: ASYNC_API_BASE_URL,
+    timeout: 10000, // Short timeout for job submission
+  });
+
+  async uploadSyllabusAsync(
+    file: File,
+    onProgress?: (progress: number) => void,
+    signal?: AbortSignal
+  ): Promise<{ job_id: string; status: string; message: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Set auth token for async client
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      this.asyncClient.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await this.asyncClient.post(
+      '/api/syllabus-processing/upload',
+      formData,
+      {
+        signal,
+        onUploadProgress: (progressEvent) => {
+          if (onProgress && progressEvent.total) {
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress(progress);
+          }
+        },
+      }
+    );
+    
+    console.log('🚀 Async upload started:', response.data);
+    return response.data;
+  }
+
+  async getProcessingStatus(jobId: string): Promise<{
+    job_id: string;
+    status: string;
+    progress_percentage: number;
+    current_stage: string;
+    error_message?: string;
+    result_data?: any;
+  }> {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      this.asyncClient.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await this.asyncClient.get(`/api/syllabus-processing/status/${jobId}`);
+    return response.data;
+  }
+
+  async listProcessingJobs(
+    limit = 20,
+    offset = 0,
+    statusFilter?: string
+  ): Promise<{
+    jobs: any[];
+    pagination: {
+      total: number;
+      limit: number;
+      offset: number;
+      has_more: boolean;
+    };
+  }> {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      this.asyncClient.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+
+    const params = new URLSearchParams({
+      limit: limit.toString(),
+      offset: offset.toString(),
+    });
+    if (statusFilter) {
+      params.append('status_filter', statusFilter);
+    }
+
+    const response = await this.asyncClient.get(`/api/syllabus-processing/jobs?${params}`);
+    return response.data;
+  }
+
+  async cancelProcessingJob(jobId: string): Promise<{
+    message: string;
+    job_id: string;
+    status: string;
+  }> {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      this.asyncClient.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await this.asyncClient.delete(`/api/syllabus-processing/jobs/${jobId}`);
     return response.data;
   }
 
