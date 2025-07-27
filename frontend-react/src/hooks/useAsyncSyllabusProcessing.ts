@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { apiService } from '../services/api';
 
 export interface ProcessingJob {
@@ -34,7 +34,11 @@ export const useAsyncSyllabusProcessing = () => {
   const pollJobStatus = useCallback(async (jobId: string) => {
     try {
       const jobStatus = await apiService.getProcessingStatus(jobId);
-      setCurrentJob(jobStatus);
+      setCurrentJob({
+        ...jobStatus,
+        created_at: currentJob?.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
       setStatus(jobStatus.status as ProcessingStatus);
       
       // Stop polling if job is complete or failed
@@ -48,7 +52,7 @@ export const useAsyncSyllabusProcessing = () => {
       setError('Failed to get processing status');
       return false;
     }
-  }, []);
+  }, [currentJob]);
 
   // Start polling with interval
   const startPolling = useCallback((jobId: string) => {

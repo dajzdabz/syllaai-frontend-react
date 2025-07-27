@@ -24,7 +24,6 @@ import {
 import {
   CloudUpload,
   CheckCircle,
-  Error,
   Cancel,
   Refresh,
   Schedule,
@@ -32,6 +31,7 @@ import {
   Psychology,
   FindInPage,
   Create,
+  Description,
 } from '@mui/icons-material';
 import { useAsyncSyllabusProcessing } from '../hooks/useAsyncSyllabusProcessing';
 
