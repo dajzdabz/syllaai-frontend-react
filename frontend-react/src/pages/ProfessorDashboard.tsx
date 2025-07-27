@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -14,6 +15,7 @@ import {
   AppBar,
   Toolbar,
   Alert,
+  Chip,
 } from '@mui/material';
 import { getCourses, createCourse } from '../services/courseService';
 import SyllabusProcessor from '../components/SyllabusProcessor';
@@ -21,6 +23,7 @@ import type { Course } from '../types';
 
 const ProfessorDashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [courseForm, setCourseForm] = useState({
     title: '',
@@ -59,6 +62,15 @@ const ProfessorDashboard: React.FC = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             SyllabAI - Professor
           </Typography>
+          <Button 
+            onClick={() => navigate('/async-processing')} 
+            variant="outlined" 
+            size="small" 
+            sx={{ mr: 2 }}
+            endIcon={<Chip label="New!" size="small" color="primary" />}
+          >
+            Async Processing
+          </Button>
           <Typography variant="body2" sx={{ mr: 2 }}>
             {user?.name}
           </Typography>
