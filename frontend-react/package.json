@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "vercel-build": "npm run build",
+    "build": "vite build",
+    "build-with-tsc": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest",
