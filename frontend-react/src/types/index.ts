@@ -67,13 +67,12 @@ export interface School {
   updated_at: string;
 }
 
-// Authentication types
+// Authentication types - Updated for secure cookie authentication
 export interface AuthResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
   user: User;
   permissions: string[];
+  authenticated: boolean;
+  session_expires_in: number; // Session duration in seconds
 }
 
 // Course creation types

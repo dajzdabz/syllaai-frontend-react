@@ -57,6 +57,7 @@ class ApiService {
     this.client = axios.create({
       baseURL: API_BASE_URL,
       timeout: 150000, // 2.5 minute timeout to allow for AI processing
+      withCredentials: true, // SECURITY FIX: Send secure cookies with all requests
       // Don't set default Content-Type - let each request specify as needed
     });
 
@@ -67,33 +68,10 @@ class ApiService {
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('access_token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-          console.log('Token found and set:', token.substring(0, 20) + '...');
-          console.log('🔍 API Request debug - URL:', config.url, 'Method:', config.method);
-          
-          // Check if token is expired
-          try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            const isExpired = payload.exp * 1000 < Date.now();
-            if (isExpired) {
-              console.warn('⚠️ Token appears to be expired');
-            } else {
-              console.log('✅ Token is valid, expires at:', new Date(payload.exp * 1000));
-            }
-          } catch (e) {
-            console.warn('⚠️ Could not parse token payload');
-          }
-        } else {
-          // Don't warn about missing token for auth endpoints
-          const isAuthEndpoint = config.url?.includes('/auth/authenticate') || 
-                                config.url?.includes('/auth/google') ||
-                                config.url?.includes('/auth/logout');
-          if (!isAuthEndpoint) {
-            console.warn('❌ No access token found in localStorage!');
-          }
-        }
+        // SECURITY FIX: No longer send Authorization headers
+        // Authentication is now handled via secure HttpOnly cookies
+        console.log('🔍 API Request debug - URL:', config.url, 'Method:', config.method);
+        console.log('🍪 Using secure cookie authentication');
         
         // Add request ID for tracking
         config.headers['X-Request-ID'] = this.generateRequestId();
@@ -173,9 +151,13 @@ class ApiService {
   }
 
   private handleUnauthorized(): void {
-    localStorage.removeItem('access_token');
+    // SECURITY FIX: Clear session data but cookies are handled by browser/backend
     localStorage.removeItem('user');
-    window.dispatchEvent(new CustomEvent('auth-change'));
+    localStorage.removeItem('session_expires_at');
+    localStorage.removeItem('user_permissions');
+    window.dispatchEvent(new CustomEvent('auth-change', {
+      detail: { user: null, authenticated: false }
+    }));
   }
 
   private handleError(error: any): ApiError {
@@ -303,6 +285,11 @@ class ApiService {
   async getCurrentUser(): Promise<User> {
     const response = await this.client.get<User>('/api/auth/me');
     return response.data;
+  }
+
+  async logout(): Promise<void> {
+    // Call backend logout to clear secure cookie
+    await this.client.post('/api/auth/logout');
   }
 
   // Course endpoints

@@ -170,10 +170,10 @@ class AuthService {
 
       console.log('✅ ID token authentication successful');
       console.log('📥 Authentication response:', {
-        hasAccessToken: !!result.access_token,
-        tokenType: result.token_type,
-        expiresIn: result.expires_in,
-        user: result.user
+        authenticated: result.authenticated,
+        sessionExpiresIn: result.session_expires_in,
+        user: result.user,
+        hasPermissions: !!result.permissions
       });
       
       this.storeAuthData(result);
@@ -216,17 +216,20 @@ class AuthService {
   }
 
   private storeAuthData(authResponse: AuthResponse): void {
-    localStorage.setItem('access_token', authResponse.access_token);
-    localStorage.setItem('user', JSON.stringify(authResponse.user));
+    // SECURITY FIX: No longer store access tokens in localStorage
+    // Tokens are now secure HttpOnly cookies managed by the backend
     
-    // Store additional auth metadata
-    localStorage.setItem('auth_expires_at', 
-      (Date.now() + (authResponse.expires_in * 1000)).toString()
-    );
+    // Only store non-sensitive user data and permissions
+    localStorage.setItem('user', JSON.stringify(authResponse.user));
     
     if (authResponse.permissions) {
       localStorage.setItem('user_permissions', JSON.stringify(authResponse.permissions));
     }
+    
+    // Store session metadata (no sensitive tokens)
+    localStorage.setItem('session_expires_at', 
+      (Date.now() + (authResponse.session_expires_in * 1000)).toString()
+    );
     
     // Trigger auth change event
     window.dispatchEvent(new CustomEvent('auth-change', {
@@ -318,11 +321,18 @@ class AuthService {
     return user?.has_calendar_access || false;
   }
 
-  signOut(): void {
-    // Clear all auth-related data
-    localStorage.removeItem('access_token');
+  async signOut(): Promise<void> {
+    try {
+      // Call backend logout to clear secure cookie
+      await apiService.logout();
+    } catch (error) {
+      console.error('❌ Backend logout failed:', error);
+      // Continue with frontend cleanup even if backend fails
+    }
+    
+    // Clear non-sensitive data from localStorage
     localStorage.removeItem('user');
-    localStorage.removeItem('auth_expires_at');
+    localStorage.removeItem('session_expires_at');
     localStorage.removeItem('user_permissions');
     
     // Sign out from Google
@@ -349,21 +359,27 @@ class AuthService {
   }
 
   getAccessToken(): string | null {
-    const token = localStorage.getItem('access_token');
-    const expiresAt = localStorage.getItem('auth_expires_at');
-    
-    // Check if token is expired
-    if (expiresAt && Date.now() > parseInt(expiresAt)) {
-      console.log('🔄 Access token expired, clearing auth data');
-      this.signOut();
-      return null;
-    }
-    
-    return token;
+    // SECURITY FIX: Tokens are now in secure HttpOnly cookies
+    // Frontend no longer has direct access to tokens
+    // Return null to indicate cookies are being used
+    return null;
   }
 
   isAuthenticated(): boolean {
-    return !!this.getAccessToken();
+    // Check session expiry from localStorage metadata
+    const expiresAt = localStorage.getItem('session_expires_at');
+    const user = localStorage.getItem('user');
+    
+    if (!user) return false;
+    
+    // Check if session is expired
+    if (expiresAt && Date.now() > parseInt(expiresAt)) {
+      console.log('🔄 Session expired, clearing auth data');
+      this.signOut();
+      return false;
+    }
+    
+    return true;
   }
 
   getUserPermissions(): string[] {
