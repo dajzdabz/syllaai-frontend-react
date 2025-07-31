@@ -589,7 +589,7 @@ class ApiService {
       all_event_fields: data.events[0] ? Object.keys(data.events[0]) : []
     });
     
-    const response = await this.client.post<Course>('/api/student-events/save-to-my-courses', data);
+    const response = await this.client.post<Course>('/api/student-calendar/save-to-my-courses', data);
     return response.data;
   }
 
