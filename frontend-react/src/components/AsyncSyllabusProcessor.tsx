@@ -102,12 +102,10 @@ const AsyncSyllabusProcessor: React.FC<AsyncSyllabusProcessorProps> = ({
         return 2;
       case 'ai_parsing':
         return 3;
-      case 'checking_duplicates':
-        return 4;
       case 'creating_course':
-        return 5;
+        return 4;
       case 'completed':
-        return 6;
+        return 5;
       default:
         return 0;
     }
@@ -118,7 +116,6 @@ const AsyncSyllabusProcessor: React.FC<AsyncSyllabusProcessorProps> = ({
     { label: 'Security Validation', icon: <Security /> },
     { label: 'Text Extraction', icon: <FindInPage /> },
     { label: 'AI Processing', icon: <Psychology /> },
-    { label: 'Duplicate Check', icon: <Refresh /> },
     { label: 'Create Course', icon: <Create /> },
     { label: 'Complete', icon: <CheckCircle /> },
   ];

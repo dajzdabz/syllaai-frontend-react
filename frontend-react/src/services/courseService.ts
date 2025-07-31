@@ -129,7 +129,6 @@ class CourseService {
     course_title: string;
     semester?: string;
     events: CourseEventCreate[];
-    bypass_duplicates?: boolean;
   }): Promise<Course> {
     return apiService.saveToMyCourses(data);
   }

@@ -19,7 +19,6 @@ export type ProcessingStatus =
   | 'validating' 
   | 'extracting' 
   | 'ai_parsing' 
-  | 'checking_duplicates' 
   | 'creating_course' 
   | 'completed' 
   | 'failed';
@@ -144,8 +143,6 @@ export const useAsyncSyllabusProcessing = () => {
         return 'Extracting text from file...';
       case 'ai_parsing':
         return 'Processing syllabus with AI...';
-      case 'checking_duplicates':
-        return 'Checking for duplicate courses...';
       case 'creating_course':
         return 'Creating course and events...';
       case 'completed':
