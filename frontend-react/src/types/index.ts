@@ -48,16 +48,15 @@ export interface CourseEvent {
 }
 
 export type EventCategory = 
-  | 'Exam'
-  | 'Quiz'
-  | 'Assignment'
-  | 'Project'
+  | 'EXAM'
+  | 'QUIZ'
+  | 'ASSIGNMENT'
+  | 'PROJECT'
   | 'HW'
-  | 'Presentation'
-  | 'Class'
-  | 'Other'
-  | 'ASSESSMENT'
-  | 'EXAM';
+  | 'PRESENTATION'
+  | 'CLASS'
+  | 'OTHER'
+  | 'ASSESSMENT';
 
 export interface School {
   id: number;
